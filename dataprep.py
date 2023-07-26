@@ -9,6 +9,7 @@ from copy import deepcopy
 import multiprocessing as mp
 import torch
 from itertools import combinations
+from multiprocessing import Pool, cpu_count
 import logging
 logging.getLogger("trimesh").setLevel(logging.ERROR)
 
@@ -42,20 +43,49 @@ def create_scan_dist(dir_id="scan_data/"):
 
     return master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list
 
-def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
-    for i, fid in tqdm(enumerate(master_ref_mesh_list), total=master_ref_mesh_list.__len__()):
-        p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-        if fid.split('/')[1].split('.')[0] + '.pkl' not in os.listdir("cad_indices"):
-            p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+def process_mesh(args):
+    i, fid, master_scan_dist_list = args
+    for i in range(master_scan_dist_list.__len__()):
+        p_fid = 'cad_indices/' + fid[i].split('/')[1].split('.')[0] + '.pkl'
+        if fid[i].split('/')[1].split('.')[0] + '.pkl' not in os.listdir("cad_indices"):
+            p = create_conv_image_indices(trimesh.load(fid[i]), 15, 0.75, p_fid)
         else:
             with open(p_fid, 'rb') as f:
                 p = pickle.load(f)
 
-        conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)
+
         if i==0:
-            master_conv = conv
+            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)
         else:
-            master_conv = torch.cat((master_conv, conv), axis=0)
+            conv = torch.cat((conv,
+                              create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)), axis=0)
+    return conv
+
+def combine_results(results):
+    for i in range(results.__len__()):
+        if i == 0:
+            master_conv = results[i].reshape(-1, 15, 15)
+        else:
+            master_conv = torch.cat((master_conv, results[i].reshape(-1, 15, 15)), axis=0)
+    return master_conv
+
+
+def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
+    num_processes = cpu_count()  # Number of CPU cores
+    data_length = len(master_ref_mesh_list)
+    chunk_size = data_length // num_processes
+
+    # Split the data into chunks for each process
+    chunks = [(i, master_ref_mesh_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))],
+               master_scan_dist_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))])
+              for i in range(num_processes+1)]
+
+    with Pool(processes=num_processes) as pool:
+        results = list(tqdm(pool.imap(process_mesh, chunks), total=len(chunks)))
+
+    # Combine the results from different processes
+    master_conv = combine_results(results)
+
     return master_conv
 
 def create_conv_image_indices(ref_mesh, shape=15, step=0.75, f_id = 'p.pkl'):
