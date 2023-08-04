@@ -1,6 +1,7 @@
 import trimesh
 import numpy as np
 import open3d as o3d
+from matplotlib import pyplot as plt
 
 def measure_distance(mesh, ref_mesh, clean=True):
     import igl
@@ -20,3 +21,22 @@ def measure_distance(mesh, ref_mesh, clean=True):
             distance[np.where(np.abs(distance) > 0.35)])
     distance_vec = (distance * np.asarray(ref_mesh.vertex_normals).T).T
     return distance_vec, distance
+
+def view3d(ref_mesh, cm):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Plot the 3D scatter with colormap based on z-coordinate
+    sc = ax.scatter(ref_mesh.vertices[:,0], ref_mesh.vertices[:,1], ref_mesh.vertices[:,2], c=cm, cmap='jet')
+
+    # Set labels and title
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    # Add colorbar for the colormap
+    cbar = fig.colorbar(sc)
+    cbar.set_label('Color Map')
+
+    # Show the plot
+    plt.show()

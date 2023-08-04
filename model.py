@@ -18,22 +18,24 @@ class homemade_cnn(Module):
         self.device = device
 
         self.norm = BatchNorm2d(1)
-        self.c1 = Conv2d(1, 32, (5, 5))
+        self.c1 = Conv2d(1, 64, (5, 5))
         self.r1 = ReLU()
-        self.c2 = Conv2d(32, 64, (5, 5))
+        self.c2 = Conv2d(64, 128, (5, 5))
         self.r2 = ReLU()
-        self.c3 = Conv2d(64, 128, (3, 3))
+        self.c3 = Conv2d(128, 256, (3, 3))
         self.r3 = ReLU()
-        self.c4 = Conv2d(128, 256, (3, 3))
+        self.c4 = Conv2d(256, 512, (3, 3))
         self.r4 = ReLU()
-        self.c5 = Conv2d(256, 512, (3, 3))
+        self.c5 = Conv2d(512, 1024, (3, 3))
         self.r5 = ReLU()
-        self.c6 = Conv2d(512, 256, (1, 1))
+        self.c6 = Conv2d(1024, 512, (1, 1))
         self.r6 = ReLU()
-        self.c7 = Conv2d(256, 128, (1, 1))
+        self.c7 = Conv2d(512, 256, (1, 1))
         self.r7 = ReLU()
-        self.c8 = Conv2d(128, 64, (1, 1))
+        self.c8 = Conv2d(256, 128, (1, 1))
         self.r8 = ReLU()
+        self.c9 = Conv2d(128, 64, (1, 1))
+        self.r9 = ReLU()
         self.Lin1 = Linear(64, 8)
         self.Lin2 = Linear(9,1)
 
@@ -48,7 +50,8 @@ class homemade_cnn(Module):
         y = self.r5(self.c5(y))
         y = self.r6(self.c6(y))
         y = self.r7(self.c7(y))
-        y = self.r8(self.c8(y)).reshape((-1, 64))
+        y = self.r8(self.c8(y))
+        y = self.r9(self.c9(y)).reshape((-1, 64))
         y = self.Lin1(y).reshape(-1, 8)
         y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
         y = self.Lin2(y).reshape(-1)
@@ -89,7 +92,7 @@ class homemade_cnn(Module):
             # print(loss.item())
             Loss += loss.item() * x_data.shape[0]
             test += x_data.shape[0]
-            wandb.log({"Test loss": Loss, "epoch": epoch})
+            wandb.log({"Test loss": loss.item(), "epoch": epoch})
 
         Loss = Loss / test
 
@@ -113,7 +116,7 @@ def train_generalized_CNN():
     batch_size = 10000
     lr = 1e-3
     max_epoch = 500
-    wandb.init(project='generalized CNN', mode='online')
+    wandb.init(project='generalized CNN', mode='on line')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
@@ -180,12 +183,12 @@ def train_generalized_CNN():
             bestmodel_epoch = epoch
 
         if epoch % 10 ==1:
-            torch.save(bestmodel, "NN/_model" + wandb.run.name + 'model.trc')
+            torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
             print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
 
 
-    torch.save(bestmodel, "NN/_model" + wandb.run.name + 'model.trc')
-    print('saved best model with loss ' + best_test_loss + ' at epoch +' + bestmodel_epoch)
+    torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
+    print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
 
     val_train_loss = bestmodel.test_loop(train_data, l_fn, epoch)
     val_test_loss = bestmodel.test_loop(test_data, l_fn, epoch)
