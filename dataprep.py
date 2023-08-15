@@ -189,6 +189,14 @@ def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True
 
 if __name__ == '__main__':
     # master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist()
+    #
+    # with open('temp/master_scan_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_scan_dist_list, f)
+    # with open('temp/master_ave_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ave_dist_list, f)
+    # with open('temp/master_ref_mesh_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ref_mesh_list, f)
+
 
     with open('temp/master_scan_dist_list.pkl', 'rb') as f:
         master_scan_dist_list = pickle.load(f)
@@ -200,4 +208,3 @@ if __name__ == '__main__':
     master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
     torch.save(master_conv, "data/master_conv.trc")
     print('done')
-

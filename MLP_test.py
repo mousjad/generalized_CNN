@@ -4,6 +4,7 @@ import torch.optim as optim
 import numpy as np
 import trimesh
 import os
+import wandb, copy
 from utils import measure_distance
 from tqdm import tqdm
 from torch.utils.data import DataLoader
@@ -101,18 +102,20 @@ def create_scan_dist(dir_id):
     l_dist = []
 
     ref_mesh = trimesh.load('cad_model/' + dir_id.split('/')[1].split('.')[0] + '.stl')
+    l_ref_mesh = []
     for fid in tqdm(os.listdir(dir_id)):
         fid = dir_id + '/' + fid
         scan_mesh = trimesh.load(fid)
         _, dist = measure_distance(scan_mesh, ref_mesh)
         l_dist.append(dist)
+        l_ref_mesh.append(np.concatenate((ref_mesh.vertices, ref_mesh.vertex_normals), axis=1))
     l_dist = torch.from_numpy(np.array(l_dist).reshape(-1, 1))
-    return l_dist
+    return l_dist, l_ref_mesh
 
 
 def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    ref_mesh = trimesh.load('cad_model/mod_nist_light.stl')
+
 
     # Assuming input data has shape (batch_size, input_dim)
     input_dim = 6  # (x, y, z, nx, ny, nz)
@@ -120,17 +123,23 @@ def main():
 
     # Create the MLP model
     mlp = MLP(input_dim, output_dim, device).to(device)
-    batch_size = 1000
+    batch_size = 50000
     lr = 1e-5
     max_epoch = 5000
     l_fn = nn.MSELoss(reduction='mean')
     opt = optim.AdamW(mlp.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min', factor=0.5, verbose=True)
+    wandb.init(project='Predictive mlp', mode='online')
+    wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
+    if wandb.run.name is None:
+        wandb.run.name = 'offline_test'
+    wandb.watch(mlp, log_freq=10)
 
-    input = torch.cat((torch.from_numpy(ref_mesh.vertices), torch.from_numpy(ref_mesh.vertex_normals)), axis=1)
-    input = torch.cat((input, input, input, input, input, input), axis=0).type(torch.float)
-    dist = create_scan_dist('scan_data/mod_nist_light.1').type(torch.float)
-
+    dist1, ref_mesh1 = create_scan_dist('scan_data/mod_nist_light_in_process.2')
+    dist2, ref_mesh2 = create_scan_dist('scan_data/test_part_1_light.1')
+    dist3, ref_mesh3 = create_scan_dist('scan_data/test_part_2_light.1')
+    dist = torch.cat((dist1, dist2, dist3), axis=0).type(torch.float)
+    input = torch.from_numpy(np.concatenate((np.array(ref_mesh1).reshape(-1, 6), np.array(ref_mesh2).reshape(-1, 6), np.array(ref_mesh3).reshape(-1, 6)))).type(torch.float)
 
     seed = torch.manual_seed(0)
     train_gt, test_gt = torch.utils.data.random_split(dist, [int(np.floor(dist.shape[0]*0.75)), int(np.ceil(dist.shape[0]*0.25))], seed)
@@ -145,12 +154,28 @@ def main():
 
     train_loss, test_loss = np.inf, np.inf
     pbar = tqdm(range(max_epoch), desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
+    best_test_loss = np.inf
     for epoch in pbar:
         train_loss = mlp.train_loop(train_data, l_fn, opt)
         test_loss = mlp.test_loop(test_data, l_fn)
         scheduler.step(test_loss)
         pbar.set_description("test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
+        wandb.log({'epoch': epoch, 'Learning rate': opt.param_groups[0]['lr'], 'Test loss': test_loss, 'Train loss': train_loss})
+
+        if test_loss <= best_test_loss:
+            bestmodel = copy.deepcopy(mlp)
+            best_test_loss = test_loss
+            bestmodel_epoch = epoch
+
+        if epoch % 10 ==1:
+            torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
+            print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
+
+    torch.save(bestmodel, "NN_model/" + wandb.run.name + '_mlp_model.trc')
+    print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
+
     return mlp
+    torch.save(mlp, 'NN_model/test_mlp.trc')
 
 
 if __name__ == '__main__':
