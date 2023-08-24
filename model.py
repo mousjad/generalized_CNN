@@ -1,4 +1,7 @@
+import os
+
 import torch
+import trimesh
 from torch.nn import *
 from torch.optim import *
 from torch.utils.data import DataLoader
@@ -212,10 +215,17 @@ def train_generalized_CNN():
     print('best model training loss: ' + str(val_train_loss))
     print('best model test loss: ' + str(val_test_loss))
 
-def nn_compensate(nn_model_fid, dist, ref_mesh):
+def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
     import dataprep
 
-    conv = dataprep.single_conv_image(dist, ref_mesh)
+    p_fid = 'cad_indices/' + ref_mesh_fid.split('/')[1].split('.')[0] + '.pkl'
+    if p_fid in os.listdir("cad_indices"):
+        with open(p_fid, 'rb') as f:
+            p = pickle.load(f)
+        conv = dataprep.create_conv_image_from_indices(p, dist, show_p_bar=False)
+    else:
+        ref_mesh = trimesh.load_mesh(ref_mesh_fid)
+        conv = dataprep.single_conv_image(dist, ref_mesh)
 
     model = torch.load(nn_model_fid)
     pred = model.forward(conv, dist)
