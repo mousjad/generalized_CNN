@@ -21,7 +21,6 @@ def analyse(nn_fid=None):
     csv_result_fid = 'result/analyse_nn.csv'
     if nn_fid is None:
         nn_fid = easygui.fileopenbox('Select a nn to test', 'Select a nn to test')
-    model = torch.load(nn_fid)
 
     with open(csv_result_fid, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
