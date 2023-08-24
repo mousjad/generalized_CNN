@@ -124,6 +124,8 @@ def train_generalized_CNN():
     l_fn = MSELoss(reduction='mean')
 
     l_scan_case_dist = torch.load("data/master_conv.trc").type(torch.float)
+    ind = torch.where(l_scan_case_dist.sum(axis=1).sum(axis=1) != 0)[0]
+    l_scan_case_dist = l_scan_case_dist[ind, :, :]
 
     with open('temp/master_ave_dist_list.pkl', 'rb') as f:
         ave_dist = pickle.load(f)
@@ -133,7 +135,7 @@ def train_generalized_CNN():
         else:
             temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
     ave_dist = temp
-    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
+    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)[ind]
 
     with open('temp/master_scan_dist_list.pkl', 'rb') as f:
         center_dist = pickle.load(f)
@@ -143,21 +145,34 @@ def train_generalized_CNN():
         else:
             temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
     center_dist = temp
-    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
+    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)[ind]
+
+    ind = torch.where(center_dist!=0)[0]
+    l_scan_case_dist = l_scan_case_dist[ind, :, :]
+    center_dist = center_dist[ind]
+    ave_dist = ave_dist[ind]
 
     seed = torch.manual_seed(0)
-    train_gt, test_gt = torch.utils.data.random_split(center_dist, [int(center_dist.shape[0]*0.75), int(center_dist.shape[0]*0.25)], seed)
+    train_gt, test_gt = torch.utils.data.random_split(center_dist, [int(np.round(center_dist.shape[0]*0.75)),
+                                                                    int(np.round(center_dist.shape[0]*0.25))], seed)
     x_train, x_test = l_scan_case_dist[train_gt.indices], l_scan_case_dist[test_gt.indices]
     x2_train, x2_test = center_dist[train_gt.indices], center_dist[test_gt.indices]
     y_train, y_test = ave_dist[train_gt.indices], ave_dist[test_gt.indices]
 
+    # train_gt, test_gt = range(int(np.round(center_dist.shape[0] * 0.75))), range(
+    #     int(np.round(center_dist.shape[0] * 0.25)))
+    # x_train, x_test = l_scan_case_dist[train_gt], l_scan_case_dist[test_gt]
+    # x2_train, x2_test = center_dist[train_gt], center_dist[test_gt]
+    # y_train, y_test = ave_dist[train_gt], ave_dist[test_gt]
+    #
     train_dataset = dataset(x_train, x2_train, y_train)
     test_dataset = dataset(x_test, x2_test, y_test)
 
     train_data = DataLoader(train_dataset, batch_size=batch_size)
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
-    hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
+    # hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
+    hmc = torch.load('NN_model/worthy-totem-6model.trc')
     opt = AdamW(hmc.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min', factor=0.5, verbose=True)
     wandb.watch(hmc, log_freq=10)
@@ -169,10 +184,12 @@ def train_generalized_CNN():
     for epoch in pbar:
         hmc.train()
         train_loss = hmc.train_loop(train_data, l_fn, opt, epoch)
+        wandb.log({"Mean train loss": train_loss, "epoch": epoch})
         pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
 
         hmc.eval()
         test_loss = hmc.test_loop(test_data, l_fn, epoch)
+        wandb.log({"Mean test loss": test_loss, "epoch": epoch})
         scheduler.step(test_loss)
         pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
         wandb.log({'epoch': epoch, 'Learning rate': opt.param_groups[0]['lr']})
@@ -194,3 +211,13 @@ def train_generalized_CNN():
     val_test_loss = bestmodel.test_loop(test_data, l_fn, epoch)
     print('best model training loss: ' + str(val_train_loss))
     print('best model test loss: ' + str(val_test_loss))
+
+def nn_compensate(nn_model_fid, dist, ref_mesh):
+    import dataprep
+
+    conv = dataprep.single_conv_image(dist, ref_mesh)
+
+    model = torch.load(nn_model_fid)
+    pred = model.forward(conv, dist)
+
+    return pred
