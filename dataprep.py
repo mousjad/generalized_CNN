@@ -40,21 +40,23 @@ def create_scan_dist(dir_id="scan_data/"):
             ave_dist = np.array(l_dist).mean(axis=0)
             for i in comb:
                 master_ave_dist_list.append(ave_dist)
+            print(master_ave_dist_list.__len__(), (ave_dist - l_dist).std(axis=1))
 
     return master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list
 
 def process_mesh(args):
     i, fid, master_scan_dist_list = args
+    conv = None
     for i in range(master_scan_dist_list.__len__()):
         p_fid = 'cad_indices/' + fid[i].split('/')[1].split('.')[0] + '.pkl'
-        if fid[i].split('/')[1].split('.')[0] + '.pkl' not in os.listdir("cad_indices"):
-            p = create_conv_image_indices(trimesh.load(fid[i]), 15, 0.75, p_fid)
-        else:
-            with open(p_fid, 'rb') as f:
-                p = pickle.load(f)
+        # if fid[i].split('/')[1].split('.')[0] + '.pkl' not in os.listdir("cad_indices"):
+        #     p = create_conv_image_indices(trimesh.load(fid[i]), 15, 0.75, p_fid)
+        # else:
+        with open(p_fid, 'rb') as f:
+            p = pickle.load(f)
 
 
-        if i==0:
+        if conv is None:
             conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)
         else:
             conv = torch.cat((conv,
@@ -71,16 +73,16 @@ def combine_results(results):
 
 
 def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
-    num_processes = cpu_count()  # Number of CPU cores
+    num_processes = 8  # Number of CPU cores
     data_length = len(master_ref_mesh_list)
     chunk_size = data_length // num_processes
 
     # Split the data into chunks for each process
     chunks = [(i, master_ref_mesh_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))],
                master_scan_dist_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))])
-              for i in range(num_processes+1)]
+              for i in range(num_processes)]
 
-    with Pool(processes=num_processes) as pool:
+    with Pool(processes=8) as pool:
         results = list(tqdm(pool.imap(process_mesh, chunks), total=len(chunks)))
 
     # Combine the results from different processes
@@ -103,7 +105,7 @@ def create_conv_image_indices(ref_mesh, shape=15, step=0.75, f_id = 'p.pkl'):
 
     print('Starting pool of processes')
     # Create a pool of processes
-    with mp.Pool() as pool:
+    with mp.Pool(processes=1) as pool:
         # Map the compute_indices function over the vertex chunks in parallel, passing
         # the necessary arguments to the function as a tuple
         results = pool.starmap(
@@ -115,9 +117,10 @@ def create_conv_image_indices(ref_mesh, shape=15, step=0.75, f_id = 'p.pkl'):
     all_scan_case_dist = [item for sublist in results for item in sublist]
 
     # Save the results to a file and return them
-    with open(f_id, 'wb') as f:
-        pickle.dump(all_scan_case_dist, f)
-        print('saved')
+    if f_id is not None:
+        with open(f_id, 'wb') as f:
+            pickle.dump(all_scan_case_dist, f)
+            print('saved')
     return all_scan_case_dist
 
 def compute_indices(vertices, ref_mesh, shape, step, SE, k_tree):
@@ -185,6 +188,11 @@ def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True
                     scan_case_dist[i % shape, i // shape] = scan_dist[p].mean() - scan_dist[u]
             l_scan_case_dist.append(scan_case_dist.copy())
     return torch.tensor(np.array(l_scan_case_dist))
+
+def single_conv_image(scan_dist, ref_mesh):
+    P = create_conv_image_indices(ref_mesh, f_id=None)
+    conv = create_conv_image_from_indices(P, scan_dist)
+    return conv
 
 
 if __name__ == '__main__':

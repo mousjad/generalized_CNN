@@ -17,8 +17,8 @@ def measure_distance(mesh, ref_mesh, clean=True):
     if clean:
         distance[np.where(np.asarray(ref_mesh.vertices)[:, 2] < 0.03)] = np.zeros_like(
             distance[np.where(np.asarray(ref_mesh.vertices)[:, 2] < 0.03)])
-        distance[np.where(np.abs(distance) > 0.35)] = np.zeros_like(
-            distance[np.where(np.abs(distance) > 0.35)])
+        distance[np.where(np.abs(distance) > 0.5)] = np.zeros_like(
+            distance[np.where(np.abs(distance) > 0.5)])
     distance_vec = (distance * np.asarray(ref_mesh.vertex_normals).T).T
     return distance_vec, distance
 
