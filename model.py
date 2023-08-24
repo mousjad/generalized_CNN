@@ -217,17 +217,26 @@ def train_generalized_CNN():
 
 def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
     import dataprep
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    p_fid = 'cad_indices/' + ref_mesh_fid.split('/')[1].split('.')[0] + '.pkl'
+    p_fid = ref_mesh_fid.split('/')[1].split('.')[0] + '.pkl'
     if p_fid in os.listdir("cad_indices"):
-        with open(p_fid, 'rb') as f:
+        with open('cad_indices/' + p_fid, 'rb') as f:
             p = pickle.load(f)
-        conv = dataprep.create_conv_image_from_indices(p, dist, show_p_bar=False)
+        conv = dataprep.create_conv_image_from_indices(p, dist, show_p_bar=False).type(torch.float)
     else:
         ref_mesh = trimesh.load_mesh(ref_mesh_fid)
-        conv = dataprep.single_conv_image(dist, ref_mesh)
-
-    model = torch.load(nn_model_fid)
-    pred = model.forward(conv, dist)
+        conv = dataprep.single_conv_image(dist, ref_mesh).type(torch.float)
+        
+    model = torch.load(nn_model_fid).type(torch.float).to(device)
+    
+    
+    ddataset = dataset(conv, torch.tensor(dist), torch.tensor(dist))
+    Data = DataLoader(ddataset, batch_size=10000)
+    pred = torch.zeros_like(torch.tensor(dist))
+    for i, data in enumerate(Data):
+        x_data, x2_data, y_data = data
+        x_data, x2_data, y_data = x_data.to(device).type(torch.float), x2_data.to(device).type(torch.float), y_data.to(device).type(torch.float)
+        pred[i*10000:(i+1)*10000] = model.forward(x_data, x2_data) 
 
     return pred

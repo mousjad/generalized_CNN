@@ -50,7 +50,7 @@ def analyse(nn_fid=None):
                 _, dist = measure_distance(scan_mesh, ref_mesh)
                 l_dist.append(dist)
 
-                nn_dist = model.nn_compensate(nn_fid, dist, ref_mesh)
+                nn_dist = model.nn_compensate(nn_fid, dist, ref_mesh_fid)
                 l_nn_dist.append(nn_dist)
 
             ave_dist = np.mean(np.array(l_dist), axis=1)
