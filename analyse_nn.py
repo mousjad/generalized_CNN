@@ -24,10 +24,10 @@ def analyse(nn_fid=None):
 
     with open(csv_result_fid, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
-        csvwriter.writerows([
+        csvwriter.writerow([
             nn_fid
         ])
-        csvwriter.writerows([
+        csvwriter.writerow([
             'ref_mesh', 'scan_mesh', 'Absolute deviation mean of single scan', 'Absolute deviation mean of average scan',
             'Absolute deviation mean of CNN output', 'Absolute deviation mean of (single scan - average scan)',
             'Absolute deviation mean of (CNN output - average scan)',
@@ -43,9 +43,10 @@ def analyse(nn_fid=None):
             ref_mesh = trimesh.load(ref_mesh_fid)
             subdir_id = dir_id + subdir_id + "/"
 
-            l_dist, l_nn_dist = [], []
+            l_dist, l_nn_dist, l_scan_mesh = [], [], []
             for f_id in os.listdir(subdir_id):
                 f_id = subdir_id + f_id
+                l_scan_mesh.append(f_id)
                 scan_mesh = trimesh.load(f_id)
                 _, dist = measure_distance(scan_mesh, ref_mesh)
                 l_dist.append(dist)
@@ -53,14 +54,14 @@ def analyse(nn_fid=None):
                 nn_dist = model.nn_compensate(nn_fid, dist, ref_mesh_fid)
                 l_nn_dist.append(nn_dist)
 
-            ave_dist = np.mean(np.array(l_dist), axis=1)
+            ave_dist = np.mean(np.array(l_dist), axis=0)
 
             for i in range(len(l_dist)):
                 csvwriter.writerow([
-                    ref_mesh_fid, f_id, np.mean(np.abs(l_dist[i])), np.mean(np.abs(ave_dist)),
-                    np.mean(np.abs(l_nn_dist[i])), np.mean(np.abs(l_dist[i]-ave_dist)),
-                    np.mean(np.abs(l_nn_dist[i] - ave_dist)), np.std(l_dist[i]), np.std(ave_dist), np.std(l_nn_dist[i]),
-                    np.std(l_dist[i]-ave_dist), np.std(l_nn_dist[i]-ave_dist)
+                    ref_mesh_fid, l_scan_mesh[i], np.mean(np.abs(l_dist[i])), np.mean(np.abs(ave_dist)),
+                    np.mean(np.abs(l_nn_dist[i].numpy())), np.mean(np.abs(l_dist[i]-ave_dist)),
+                    np.mean(np.abs(l_nn_dist[i].numpy() - ave_dist)), np.std(l_dist[i]), np.std(ave_dist), np.std(l_nn_dist[i].numpy()),
+                    np.std(l_dist[i]-ave_dist), np.std(l_nn_dist[i].numpy()-ave_dist)
                 ])
 
 

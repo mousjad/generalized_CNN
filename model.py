@@ -234,9 +234,11 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
     ddataset = dataset(conv, torch.tensor(dist), torch.tensor(dist))
     Data = DataLoader(ddataset, batch_size=10000)
     pred = torch.zeros_like(torch.tensor(dist))
-    for i, data in enumerate(Data):
-        x_data, x2_data, y_data = data
-        x_data, x2_data, y_data = x_data.to(device).type(torch.float), x2_data.to(device).type(torch.float), y_data.to(device).type(torch.float)
-        pred[i*10000:(i+1)*10000] = model.forward(x_data, x2_data) 
+    with torch.no_grad():
+        for i, data in enumerate(Data):
+            x_data, x2_data, y_data = data
+            x_data, x2_data = x_data.to(device).type(torch.float), x2_data.to(device).type(torch.float)
+            pred[i*10000:(i+1)*10000] = model.forward(x_data, x2_data)
+            torch.cuda.empty_cache()
 
     return pred
