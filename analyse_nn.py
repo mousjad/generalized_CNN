@@ -18,10 +18,10 @@ logging.getLogger("trimesh").setLevel(logging.ERROR)
 
 
 def analyse(nn_fid=None):
-    csv_result_fid = 'result/analyse_nn.csv'
     if nn_fid is None:
         nn_fid = easygui.fileopenbox('Select a nn to test', 'Select a nn to test')
-
+    
+    csv_result_fid = 'result/' + nn_fid[:-4] + '.csv'
     with open(csv_result_fid, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow([
@@ -66,4 +66,4 @@ def analyse(nn_fid=None):
 
 
 if __name__ == '__main__':
-    analyse('NN_model/ethereal-fog-13model.trc')
+    analyse('NN_model/restful-blaze-14model.trc')
