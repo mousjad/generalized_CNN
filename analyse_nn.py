@@ -21,7 +21,7 @@ def analyse(nn_fid=None):
     if nn_fid is None:
         nn_fid = easygui.fileopenbox('Select a nn to test', 'Select a nn to test')
     
-    csv_result_fid = 'result/' + nn_fid[:-4] + '.csv'
+    csv_result_fid = 'result/' + nn_fid[9:-4] + '.csv'
     with open(csv_result_fid, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
         csvwriter.writerow([
@@ -66,4 +66,5 @@ def analyse(nn_fid=None):
 
 
 if __name__ == '__main__':
-    analyse('NN_model/restful-blaze-14model.trc')
+    analyse('NN_model/revived-dream-16model.trc')
+    analyse('NN_model/royal-surf-17model.trc')

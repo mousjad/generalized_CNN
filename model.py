@@ -40,12 +40,12 @@ class homemade_cnn(Module):
         self.c9 = Conv2d(128, 64, (1, 1))
         self.r9 = ReLU()
         self.Lin1 = Linear(64, 8)
-        self.Lin2 = Linear(9,1)
+        self.Lin2 = Linear(9, 1)
 
     def forward(self, input, input2, in_training=False):
 
-        # y = self.norm(input.reshape(-1, 1, 15, 15))
-        y = input.reshape(-1, 1, 15, 15)
+        y = self.norm(input.reshape(-1, 1, 15, 15))
+        # y = input.reshape(-1, 1, 15, 15)
         y = self.r1(self.c1(y))
         y = self.r2(self.c2(y))
         y = self.r3(self.c3(y))
@@ -70,14 +70,12 @@ class homemade_cnn(Module):
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
             pred = self.forward(x_data, x2_data)
             loss = loss_fn(pred, y_data)
-            # print(loss.item())
             Loss += loss.item() * x_data.shape[0]
             test += x_data.shape[0]
 
             # Backpropagation
             loss.backward()
             optimizer.step()
-            # scheduler.step(loss.item())
             wandb.log({"Train loss": loss.item(), "epoch": epoch})
 
         Loss = Loss/test
@@ -92,7 +90,6 @@ class homemade_cnn(Module):
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
             pred = self.forward(x_data, x2_data)
             loss = loss_fn(pred, y_data)
-            # print(loss.item())
             Loss += loss.item() * x_data.shape[0]
             test += x_data.shape[0]
             wandb.log({"Test loss": loss.item(), "epoch": epoch})
@@ -118,7 +115,7 @@ def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = 10000
     lr = 1e-3
-    max_epoch = 500
+    max_epoch = 200
     wandb.init(project='generalized CNN', mode='online')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
@@ -150,7 +147,7 @@ def train_generalized_CNN():
     center_dist = temp
     center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)[ind]
 
-    ind = torch.where(center_dist!=0)[0]
+    ind = torch.where(center_dist != 0)[0]
     l_scan_case_dist = l_scan_case_dist[ind, :, :]
     center_dist = center_dist[ind]
     ave_dist = ave_dist[ind]
@@ -174,8 +171,8 @@ def train_generalized_CNN():
     train_data = DataLoader(train_dataset, batch_size=batch_size)
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
-    # hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    hmc = torch.load('NN_model/worthy-totem-6model.trc')
+    hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
+    # hmc = torch.load('NN_model/worthy-totem-6model.trc')
     opt = AdamW(hmc.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min', factor=0.5, verbose=True)
     wandb.watch(hmc, log_freq=10)
