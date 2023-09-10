@@ -40,27 +40,27 @@ def create_scan_dist(dir_id="scan_data/"):
             ave_dist = np.array(l_dist).mean(axis=0)
             for i in comb:
                 master_ave_dist_list.append(ave_dist)
-            print(master_ave_dist_list.__len__(), (ave_dist - l_dist).std(axis=1))
+            # print(master_ave_dist_list.__len__(), (ave_dist - l_dist).std(axis=1))
 
     return master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list
 
 def process_mesh(args):
-    i, fid, master_scan_dist_list = args
+    fid, master_scan_dist_list = args
     conv = None
-    for i in range(master_scan_dist_list.__len__()):
-        p_fid = 'cad_indices/' + fid[i].split('/')[1].split('.')[0] + '.pkl'
-        # if fid[i].split('/')[1].split('.')[0] + '.pkl' not in os.listdir("cad_indices"):
-        #     p = create_conv_image_indices(trimesh.load(fid[i]), 15, 0.75, p_fid)
-        # else:
-        with open(p_fid, 'rb') as f:
-            p = pickle.load(f)
+    # for i in range(master_scan_dist_list.__len__()):
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # if fid.split('/')[1].split('.')[0] + '.pkl' not in os.listdir("cad_indices"):
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # else:
+    with open(p_fid, 'rb') as f:
+        p = pickle.load(f)
 
 
-        if conv is None:
-            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)
-        else:
-            conv = torch.cat((conv,
-                              create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)), axis=0)
+    if conv is None:
+        conv = create_conv_image_from_indices(p, master_scan_dist_list, 15, False)
+    else:
+        conv = torch.cat((conv,
+                          create_conv_image_from_indices(p, master_scan_dist_list, 15, False)), axis=0)
     return conv
 
 def combine_results(results):
@@ -82,11 +82,17 @@ def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
                master_scan_dist_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))])
               for i in range(num_processes)]
 
-    with Pool(processes=8) as pool:
-        results = list(tqdm(pool.imap(process_mesh, chunks), total=len(chunks)))
+    # # === multiprocessed ===
+    # with Pool(processes=8) as pool:
+    #     results = list(tqdm(pool.imap(process_mesh, chunks), total=len(chunks)))
+    #
+    # # Combine the results from different processes
+    # master_conv = combine_results(results)
 
-    # Combine the results from different processes
-    master_conv = combine_results(results)
+    # === Single process ===
+    master_conv = []
+    for i in tqdm(range(len(master_ref_mesh_list))):
+        master_conv.append(process_mesh((master_ref_mesh_list[i], master_scan_dist_list[i])))
 
     return master_conv
 
@@ -102,19 +108,22 @@ def create_conv_image_indices(ref_mesh, shape=15, step=0.75, f_id = 'p.pkl'):
         ref_mesh.vertices[i:i + chunk_size, :]
         for i in range(0, num_vertices, chunk_size)
     ]
+    # === multiprocessed ===
+    # print('Starting pool of processes')
+    # # Create a pool of processes
+    # with mp.Pool(processes=1) as pool:
+    #     # Map the compute_indices function over the vertex chunks in parallel, passing
+    #     # the necessary arguments to the function as a tuple
+    #     results = pool.starmap(
+    #         compute_indices,
+    #         [(chunk, ref_mesh, shape, step, SE, k_tree) for chunk in vertex_chunks]
+    #     )
+    #
+    # # Combine the results from each process
+    # all_scan_case_dist = [item for sublist in results for item in sublist]
 
-    print('Starting pool of processes')
-    # Create a pool of processes
-    with mp.Pool(processes=1) as pool:
-        # Map the compute_indices function over the vertex chunks in parallel, passing
-        # the necessary arguments to the function as a tuple
-        results = pool.starmap(
-            compute_indices,
-            [(chunk, ref_mesh, shape, step, SE, k_tree) for chunk in vertex_chunks]
-        )
-
-    # Combine the results from each process
-    all_scan_case_dist = [item for sublist in results for item in sublist]
+    # === Single process ===
+    all_scan_case_dist = compute_indices(ref_mesh, shape, step, SE, k_tree)
 
     # Save the results to a file and return them
     if f_id is not None:
@@ -123,16 +132,16 @@ def create_conv_image_indices(ref_mesh, shape=15, step=0.75, f_id = 'p.pkl'):
             print('saved')
     return all_scan_case_dist
 
-def compute_indices(vertices, ref_mesh, shape, step, SE, k_tree):
+def compute_indices(ref_mesh, shape, step, SE, k_tree):
     all_scan_case_dist = []
 
     # Compute indices for vertices in chunk
-    for i, vert in enumerate(vertices):
+    for i, vert in tqdm(enumerate(ref_mesh.vertices), total=len(ref_mesh.vertices)):
         ni = ref_mesh.vertex_normals[i, :]
 
         # Creation of the y axis of the conv cases, either toward the center of the mesh or the top
         if np.abs(ni).argmax() == 2:
-            ori = ref_mesh.vertices[i, :] - np.array((0, 0, ref_mesh.vertices[i, 2]))
+            ori = vert - np.array((0, 0, vert[ 2]))
             if np.all(ori == np.zeros(3)):
                 ori = np.array((1, 0, 0))
             else:
@@ -153,12 +162,12 @@ def compute_indices(vertices, ref_mesh, shape, step, SE, k_tree):
         scan_case_dist = []
         for u1, x in enumerate(X):
             for v1, y in enumerate(Y):
-                v = ref_mesh.vertices[i, :] - x - y
+                v = vert - x - y
                 p = k_tree.query_ball_point(v, np.sqrt(2 * (step) ** 2))
                 if len(p) != 0:
                     # p = list(set(p) - set(list(np.unique(SE))))
                     p = np.asarray(p)[
-                        np.nonzero(ref_mesh.vertex_normals[p, :].dot(ref_mesh.vertex_normals[i, :]) > 0.67)]
+                        np.nonzero(ref_mesh.vertex_normals[p, :].dot(ni) > 0.67)]
                 if len(p) == 0:
                     scan_case_dist.append(-1)
                 else:
@@ -196,6 +205,20 @@ def single_conv_image(scan_dist, ref_mesh):
 
 
 if __name__ == '__main__':
+    # fid = 'cad_model/mod_nist_light_in_process.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/mod_nist_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/test_part_1_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/test_part_2_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # print('done')
+
     # master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist()
     #
     # with open('temp/master_scan_dist_list.pkl', 'wb') as f:

@@ -20,32 +20,32 @@ class homemade_cnn(Module):
         self.batch_size = batch_size
         self.device = device
 
-        self.norm = BatchNorm2d(1)
-        self.c1 = Conv2d(1, 64, (5, 5))
+        # self.norm = BatchNorm2d(1)
+        self.c1 = Conv2d(1, 32, (5, 5))
         self.r1 = ReLU()
-        self.c2 = Conv2d(64, 128, (5, 5))
+        self.c2 = Conv2d(32, 64, (5, 5))
         self.r2 = ReLU()
-        self.c3 = Conv2d(128, 256, (3, 3))
+        self.c3 = Conv2d(64, 128, (3, 3))
         self.r3 = ReLU()
-        self.c4 = Conv2d(256, 512, (3, 3))
+        self.c4 = Conv2d(128, 256, (3, 3))
         self.r4 = ReLU()
-        self.c5 = Conv2d(512, 1024, (3, 3))
+        self.c5 = Conv2d(256, 512, (3, 3))
         self.r5 = ReLU()
-        self.c6 = Conv2d(1024, 512, (1, 1))
+        self.c6 = Conv2d(512, 256, (1, 1))
         self.r6 = ReLU()
-        self.c7 = Conv2d(512, 256, (1, 1))
+        self.c7 = Conv2d(256, 128, (1, 1))
         self.r7 = ReLU()
-        self.c8 = Conv2d(256, 128, (1, 1))
+        self.c8 = Conv2d(128, 64, (1, 1))
         self.r8 = ReLU()
-        self.c9 = Conv2d(128, 64, (1, 1))
-        self.r9 = ReLU()
+        # self.c9 = Conv2d(128, 64, (1, 1))
+        # self.r9 = ReLU()
         self.Lin1 = Linear(64, 8)
         self.Lin2 = Linear(9, 1)
 
     def forward(self, input, input2, in_training=False):
 
-        y = self.norm(input.reshape(-1, 1, 15, 15))
-        # y = input.reshape(-1, 1, 15, 15)
+        # y = self.norm(input.reshape(-1, 1, 15, 15))
+        y = input.reshape(-1, 1, 15, 15)
         y = self.r1(self.c1(y))
         y = self.r2(self.c2(y))
         y = self.r3(self.c3(y))
@@ -53,8 +53,8 @@ class homemade_cnn(Module):
         y = self.r5(self.c5(y))
         y = self.r6(self.c6(y))
         y = self.r7(self.c7(y))
-        y = self.r8(self.c8(y))
-        y = self.r9(self.c9(y)).reshape((-1, 64))
+        y = self.r8(self.c8(y)).reshape((-1, 64))
+        #y = self.r9(self.c9(y)).reshape((-1, 64))
         y = self.Lin1(y).reshape(-1, 8)
         y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
         y = self.Lin2(y).reshape(-1)
@@ -102,8 +102,8 @@ class homemade_cnn(Module):
 class dataset(torch.utils.data.IterableDataset):
     def __init__(self, X, X2, Y):
         self.X = X
-        self.Y = Y
         self.X2 = X2
+        self.Y = Y
 
     def __iter__(self):
         return zip(self.X, self.X2, self.Y)
@@ -113,7 +113,7 @@ class dataset(torch.utils.data.IterableDataset):
 
 def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    batch_size = 10000
+    batch_size = 20000
     lr = 1e-3
     max_epoch = 200
     wandb.init(project='generalized CNN', mode='online')
@@ -218,7 +218,7 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
 
     p_fid = ref_mesh_fid.split('/')[1].split('.')[0] + '.pkl'
     if p_fid in os.listdir("cad_indices"):
-        with open('cad_indices/' + p_fid, 'rb') as f:
+        with open('cad_indices1/' + p_fid, 'rb') as f:
             p = pickle.load(f)
         conv = dataprep.create_conv_image_from_indices(p, dist, show_p_bar=False).type(torch.float)
     else:
