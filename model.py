@@ -20,7 +20,7 @@ class homemade_cnn(Module):
         self.batch_size = batch_size
         self.device = device
 
-        # self.norm = BatchNorm2d(1)
+        self.norm = BatchNorm2d(1)
         self.c1 = Conv2d(1, 32, (5, 5))
         self.r1 = ReLU()
         self.c2 = Conv2d(32, 64, (5, 5))
@@ -35,17 +35,17 @@ class homemade_cnn(Module):
         self.r6 = ReLU()
         self.c7 = Conv2d(256, 128, (1, 1))
         self.r7 = ReLU()
-        self.c8 = Conv2d(128, 64, (1, 1))
+        self.c8 = Conv2d(128, 32, (1, 1))
         self.r8 = ReLU()
         # self.c9 = Conv2d(128, 64, (1, 1))
         # self.r9 = ReLU()
-        self.Lin1 = Linear(64, 8)
+        self.Lin1 = Linear(32, 8)
         self.Lin2 = Linear(9, 1)
 
     def forward(self, input, input2, in_training=False):
 
-        # y = self.norm(input.reshape(-1, 1, 15, 15))
-        y = input.reshape(-1, 1, 15, 15)
+        y = self.norm(input.reshape(-1, 1, 15, 15))
+        # y = input.reshape(-1, 1, 15, 15)
         y = self.r1(self.c1(y))
         y = self.r2(self.c2(y))
         y = self.r3(self.c3(y))
@@ -53,7 +53,7 @@ class homemade_cnn(Module):
         y = self.r5(self.c5(y))
         y = self.r6(self.c6(y))
         y = self.r7(self.c7(y))
-        y = self.r8(self.c8(y)).reshape((-1, 64))
+        y = self.r8(self.c8(y)).reshape((-1, 32))
         #y = self.r9(self.c9(y)).reshape((-1, 64))
         y = self.Lin1(y).reshape(-1, 8)
         y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
@@ -111,11 +111,27 @@ class dataset(torch.utils.data.IterableDataset):
     def __len__(self):
         return len(self.X)
 
+
+class ProgressiveDataset(torch.utils.data.IterableDataset):
+    def __init__(self, X, X2, Y, initial_subset_size):
+        self.X = X
+        self.X2 = X2
+        self.Y = Y
+        self.current_subset_size = initial_subset_size
+        self.subset_size = min(self.current_subset_size, len(self.X))
+
+    def __iter__(self):
+        self.subset_size = min(self.current_subset_size, len(self.X))
+        return zip(self.X[:self.subset_size], self.X2[:self.subset_size], self.Y[:self.subset_size])
+
+    def __len__(self):
+        return self.subset_size
+
 def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = 20000
-    lr = 1e-3
-    max_epoch = 200
+    lr = 5e-4
+    max_epoch = 500
     wandb.init(project='generalized CNN', mode='online')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
@@ -123,11 +139,13 @@ def train_generalized_CNN():
 
     l_fn = MSELoss(reduction='mean')
 
-    l_scan_case_dist = torch.load("data/master_conv.trc").type(torch.float)
-    ind = torch.where(l_scan_case_dist.sum(axis=1).sum(axis=1) != 0)[0]
-    l_scan_case_dist = l_scan_case_dist[ind, :, :]
+    l_scan_case_dist = torch.load("data/master_conv_clean.trc").type(torch.float)
+    # x = (l_scan_case_dist - l_scan_case_dist.min()) / (l_scan_case_dist.max() - l_scan_case_dist.min())
+    # torch.save(x, 'data/master_conv_norm.trc')
+    # ind = torch.where(l_scan_case_dist.sum(axis=1).sum(axis=1) != 0)[0]
+    # l_scan_case_dist = l_scan_case_dist[ind, :, :]
 
-    with open('temp/master_ave_dist_list.pkl', 'rb') as f:
+    with open('temp/master_ave_dist_list_clean.pkl', 'rb') as f:
         ave_dist = pickle.load(f)
     for i in range(ave_dist.__len__()):
         if i == 0:
@@ -135,9 +153,9 @@ def train_generalized_CNN():
         else:
             temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
     ave_dist = temp
-    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)[ind]
+    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
 
-    with open('temp/master_scan_dist_list.pkl', 'rb') as f:
+    with open('temp/master_scan_dist_list_clean.pkl', 'rb') as f:
         center_dist = pickle.load(f)
     for i in range(center_dist.__len__()):
         if i == 0:
@@ -145,7 +163,7 @@ def train_generalized_CNN():
         else:
             temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
     center_dist = temp
-    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)[ind]
+    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
 
     ind = torch.where(center_dist != 0)[0]
     l_scan_case_dist = l_scan_case_dist[ind, :, :]
@@ -155,18 +173,14 @@ def train_generalized_CNN():
     seed = torch.manual_seed(0)
     train_gt, test_gt = torch.utils.data.random_split(center_dist, [int(np.round(center_dist.shape[0]*0.75)),
                                                                     int(np.round(center_dist.shape[0]*0.25))], seed)
+    # train_gt.indices.sort()
+    # test_gt.indices.sort()
     x_train, x_test = l_scan_case_dist[train_gt.indices], l_scan_case_dist[test_gt.indices]
     x2_train, x2_test = center_dist[train_gt.indices], center_dist[test_gt.indices]
     y_train, y_test = ave_dist[train_gt.indices], ave_dist[test_gt.indices]
 
-    # train_gt, test_gt = range(int(np.round(center_dist.shape[0] * 0.75))), range(
-    #     int(np.round(center_dist.shape[0] * 0.25)))
-    # x_train, x_test = l_scan_case_dist[train_gt], l_scan_case_dist[test_gt]
-    # x2_train, x2_test = center_dist[train_gt], center_dist[test_gt]
-    # y_train, y_test = ave_dist[train_gt], ave_dist[test_gt]
-    #
-    train_dataset = dataset(x_train, x2_train, y_train)
-    test_dataset = dataset(x_test, x2_test, y_test)
+    train_dataset = dataset(x_train, x2_train, y_train)#, int(len(x_train)*0.1))
+    test_dataset = dataset(x_test, x2_test, y_test)#, int(len(x_test)*0.1))
 
     train_data = DataLoader(train_dataset, batch_size=batch_size)
     test_data = DataLoader(test_dataset, batch_size=batch_size)
@@ -202,7 +216,8 @@ def train_generalized_CNN():
         if epoch % 10 ==1:
             torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
             print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
-
+            # train_dataset.current_subset_size += int(np.round(len(x_train)*0.1))
+            # test_dataset.current_subset_size += int(np.round(len(x_test)*0.1))
 
     torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
     print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
@@ -218,15 +233,15 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
 
     p_fid = ref_mesh_fid.split('/')[1].split('.')[0] + '.pkl'
     if p_fid in os.listdir("cad_indices"):
-        with open('cad_indices1/' + p_fid, 'rb') as f:
+        with open('cad_indices/' + p_fid, 'rb') as f:
             p = pickle.load(f)
         conv = dataprep.create_conv_image_from_indices(p, dist, show_p_bar=False).type(torch.float)
     else:
         ref_mesh = trimesh.load_mesh(ref_mesh_fid)
         conv = dataprep.single_conv_image(dist, ref_mesh).type(torch.float)
-        
+
     model = torch.load(nn_model_fid).type(torch.float).to(device)
-    
+    model.eval()
     
     ddataset = dataset(conv, torch.tensor(dist), torch.tensor(dist))
     Data = DataLoader(ddataset, batch_size=10000)

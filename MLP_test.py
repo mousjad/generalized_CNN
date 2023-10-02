@@ -137,7 +137,7 @@ def main():
 
     dist1, ref_mesh1 = create_scan_dist('scan_data/mod_nist_light_in_process.2')
     dist2, ref_mesh2 = create_scan_dist('scan_data/test_part_1_light.1')
-    dist3, ref_mesh3 = create_scan_dist('scan_data/test_part_2_light.1')
+    dist3, ref_mesh3 = create_scan_dist('scan_data/.test_part_2_light.1')
     dist = torch.cat((dist1, dist2, dist3), axis=0).type(torch.float)
     input = torch.from_numpy(np.concatenate((np.array(ref_mesh1).reshape(-1, 6), np.array(ref_mesh2).reshape(-1, 6), np.array(ref_mesh3).reshape(-1, 6)))).type(torch.float)
 
