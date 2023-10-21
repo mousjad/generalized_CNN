@@ -1,0 +1,173 @@
+import torch
+from torch.nn import *
+from torch.optim import *
+from torch.utils.data import DataLoader
+import torch.backends.cudnn as cudnn
+import numpy as np
+import torchvision
+from torchvision import datasets, models, transforms
+import matplotlib.pyplot as plt
+import time
+import os
+from tempfile import TemporaryDirectory
+import wandb, pickle
+from tqdm import tqdm
+import copy
+
+cudnn.benchmark = True
+plt.ion()   # interactive mode
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.Normalize([0.485], [0.229])
+    ]),
+    'val': transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.Normalize([0.485], [0.229])
+    ]),
+}
+
+class ResNet(Module):
+    def __init__(self, device):
+        super(ResNet, self).__init__()
+        self.resnet = models.resnet18()
+        self.device = device
+
+        # Remove last layer (classifier)
+        nb_ftrs = self.resnet.fc.in_features
+        self.resnet = Sequential(*list(self.resnet.children())[:-1])
+
+        #Define new layers
+        self.conv0 = Conv2d(in_channels=1, out_channels=3, kernel_size=1, stride=1, padding=0)
+        self.fc1 = Linear(nb_ftrs, 1)
+
+    def forward(self, input1):
+        x = self.conv0(input1)
+        x = self.resnet(x).view((-1, 512))
+        x = torch.flatten(self.fc1(x))
+
+        return x
+
+    def train_loop(self, Data, loss_fn, optimizer, epoch):
+        Loss = 0
+        test = 0
+        for data in Data:
+            optimizer.zero_grad()
+            x_data, y_data = data
+            x_data, y_data = x_data.to(self.device), y_data.to(self.device)
+            pred = self.forward(data_transforms['train'](x_data))
+            loss = loss_fn(pred, y_data)
+            Loss += loss.item() * x_data.shape[0]
+            test += x_data.shape[0]
+
+            # Backpropagation
+            loss.backward()
+            optimizer.step()
+            wandb.log({"Train loss": loss.item(), "epoch": epoch})
+
+        Loss = Loss/test
+
+        return Loss
+
+    def test_loop(self, Data, loss_fn, epoch):
+        Loss = 0
+        test = 0
+        for data in Data:
+            x_data, y_data = data
+            x_data, y_data = x_data.to(self.device), y_data.to(self.device)
+            pred = self.forward(data_transforms['val'](x_data))
+            loss = loss_fn(pred, y_data)
+            Loss += loss.item() * x_data.shape[0]
+            test += x_data.shape[0]
+            wandb.log({"Test loss": loss.item(), "epoch": epoch})
+
+        Loss = Loss / test
+
+        return Loss
+
+
+class dataset(torch.utils.data.IterableDataset):
+    def __init__(self, X, Y):
+        self.X = X
+        self.Y = Y
+
+    def __iter__(self):
+        return zip(self.X, self.Y)
+
+    def __len__(self):
+        return len(self.X)
+
+
+
+
+def train_resnet():
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    batch_size = 500
+    lr = 1e-3
+    max_epoch = 300
+    wandb.init(project='generalized CNN resnet', mode='online')
+    wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
+    if wandb.run.name is None:
+        wandb.run.name = 'offline_test'
+
+    l_fn = MSELoss(reduction='mean')
+
+    x_train = torch.load("data/x_train.trc")[:,0,:,:].reshape((-1, 1, 15, 15))
+    y_train = torch.load("data/y_train.trc")
+
+    x_test = torch.load("data/x_test.trc")[:,0,:,:].reshape((-1, 1, 15, 15))
+    y_test = torch.load("data/y_test.trc")
+
+    train_dataset = dataset(x_train, y_test)
+    test_dataset = dataset(x_test, y_train)
+
+    train_data = DataLoader(train_dataset, batch_size=batch_size)
+    test_data = DataLoader(test_dataset, batch_size=batch_size)
+
+    model = ResNet(device).to(device)
+    opt = AdamW(model.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min', factor=0.5, verbose=True)
+    wandb.watch(model, log_freq=10)
+
+    test_loss = np.inf
+    best_test_loss = np.inf
+
+    pbar = tqdm(range(max_epoch), desc="test loss = " + str(test_loss) + " Train_loss = " + str(test_loss))
+    for epoch in pbar:
+        model.train()
+        train_loss = model.train_loop(train_data, l_fn, opt, epoch)
+        wandb.log({"Mean train loss": train_loss, "epoch": epoch})
+        pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
+
+        model.eval()
+        test_loss = model.test_loop(test_data, l_fn, epoch)
+        wandb.log({"Mean test loss": test_loss, "epoch": epoch})
+        scheduler.step(test_loss)
+        pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
+        wandb.log({'epoch': epoch, 'Learning rate': opt.param_groups[0]['lr']})
+
+        if test_loss <= best_test_loss:
+            bestmodel = copy.deepcopy(model)
+            best_test_loss = test_loss
+            bestmodel_epoch = epoch
+
+        if epoch % 10 ==1:
+            torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
+            print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
+            # train_dataset.current_subset_size += int(np.round(len(x_train)*0.1))
+            # test_dataset.current_subset_size += int(np.round(len(x_test)*0.1))
+
+
+    torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
+    print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
+
+    val_train_loss = bestmodel.test_loop(train_data, l_fn, epoch)
+    val_test_loss = bestmodel.test_loop(test_data, l_fn, epoch)
+    print('best model training loss: ' + str(val_train_loss))
+    print('best model test loss: ' + str(val_test_loss))
+    return "NN_model/" + wandb.run.name + 'model.trc'
+
+if __name__ == '__main__':
+    train_resnet()

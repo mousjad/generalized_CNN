@@ -15,7 +15,7 @@ logging.getLogger("trimesh").setLevel(logging.ERROR)
 def analyse(nn_fid=None):
     if nn_fid is None:
         nn_fid = easygui.fileopenbox('Select a nn to test', 'Select a nn to test')
-    
+
     csv_result_fid = 'result/' + nn_fid[9:-4] + '.csv'
     with open(csv_result_fid, 'w') as csvfile:
         csvwriter = csv.writer(csvfile)
@@ -37,7 +37,7 @@ def analyse(nn_fid=None):
         if not (os.path.exists('result/' + nn_fid[9:-4]) and os.path.isdir('result/' + nn_fid[9:-4])):
             os.mkdir('result/' + nn_fid[9:-4])
         for subdir_id in tqdm(os.listdir(dir_id)):
-            if subdir_id[0] != '.':
+            if '..' not in subdir_id:
                 ref_mesh_fid = "cad_model/" + subdir_id.split('.')[0] + ".stl"
                 ref_mesh = trimesh.load(ref_mesh_fid)
                 subdir_id = dir_id + subdir_id + "/"
@@ -96,10 +96,46 @@ def compensate_and_save(nn_fid):
     cp_ref_mesh.vertices += np.array(nn_dist).reshape((-1, 1)) * cp_ref_mesh.vertex_normals
     cp_ref_mesh.export('nn_comp_original_blade.stl')
 
+def compare_average_to_cnn(dir_id, nn_fid):
+    ref_mesh_fid = "cad_model/" + dir_id.split("\\")[-1].split('.')[0] + ".stl"
+    ref_mesh = trimesh.load(ref_mesh_fid)
+    # create_conv_image_indices(ref_mesh, f_id='cad_indices/' + ref_mesh_fid.split('/')[-1].split('.')[0] + '.pkl')
+    subdir_id = dir_id + "/"
+    SE, _, _, _, _, _ = igl.sharp_edges(ref_mesh.vertices, ref_mesh.faces, 1.4)
+
+    l_dist, l_nn_dist, l_scan_mesh = [], [], []
+    for f_id in tqdm(os.listdir(subdir_id)):
+        f_id = subdir_id + f_id
+        l_scan_mesh.append(f_id)
+        scan_mesh = trimesh.load(f_id)
+        _, dist = measure_distance(scan_mesh, ref_mesh)
+        l_dist.append(dist)
+
+        nn_dist = model.nn_compensate(nn_fid, dist, ref_mesh_fid)
+        nn_dist = np.array(nn_dist)
+        nn_dist[SE] = np.array(dist[SE])
+        nn_dist[np.where(dist == 0)[0]] = dist[np.where(dist == 0)[0]]
+        nn_dist[np.where(np.abs(ref_mesh.vertex_normals[:, 2]) == 1)[0]] = dist[
+            np.where(np.abs(ref_mesh.vertex_normals[:, 2]) == 1)[0]]
+        cp_nn_ref_mesh = ref_mesh.copy()
+        cp_nn_ref_mesh.vertices -= nn_dist.reshape((-1, 1)) * cp_nn_ref_mesh.vertex_normals
+        # _, nn_dist = measure_distance(cp_nn_ref_mesh, ref_mesh)
+        l_nn_dist.append(np.array(nn_dist))
+    ave_dist = np.mean(np.array(l_dist), axis=0)
+
+    for i in range(len(l_dist)):
+        create_image(ref_mesh, 0, l_dist[i], ave_dist, l_nn_dist[i], image_fname=f"test_5_{str(i)}.png")
+        print((np.mean(np.abs(l_nn_dist[i] - ave_dist)) - np.mean(np.abs(l_dist[i] - ave_dist))) / np.mean(
+            np.abs(l_dist[i] - ave_dist)))
+
+    print('done')
+
 
 if __name__ == '__main__':
-    compensate_and_save('NN_model/noble-wood-58model.trc')
-    # analyse('NN_model/noble-wood-58model.trc')
+    from dataprep import create_conv_image_indices
+    # compare_average_to_cnn(r"C:\Generalized_CNN\scan_data\test_part_6_light.1", 'NN_model/noble-wood-58model.trc')
+    # compensate_and_save('NN_model/noble-wood-58model.trc')
+    analyse("NN_model/ethereal-sponge-108model.trc")
 
 
 

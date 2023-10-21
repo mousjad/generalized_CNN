@@ -1,5 +1,6 @@
 import os
-
+from matplotlib import pyplot as plt
+import torch.backends.cudnn as cudnn
 import torch
 import trimesh
 from torch.nn import *
@@ -10,7 +11,19 @@ from tqdm import tqdm
 import numpy as np
 import copy
 import pickle
+from neighboor_padding import neighboorPadding
+from torchvision import datasets, models, transforms
 
+cudnn.benchmark = True
+data_transforms = {
+    'train': transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.Normalize([0.485], [0.229])
+    ]),
+    'val': transforms.Compose([
+        transforms.Normalize([0.485], [0.229])
+    ]),
+}
 
 class homemade_cnn(Module):
     def __init__(self, step=1, n_case=15, batch_size=2, device=torch.device("cpu")):
@@ -19,45 +32,108 @@ class homemade_cnn(Module):
         self.n_case = n_case
         self.batch_size = batch_size
         self.device = device
+        self.dropout_rate = 0.5
+        self.mask_max_pool = MaxPool2d(3, stride=1)
 
-        self.norm = BatchNorm2d(1)
-        self.c1 = Conv2d(1, 32, (5, 5))
-        self.r1 = ReLU()
-        self.c2 = Conv2d(32, 64, (5, 5))
-        self.r2 = ReLU()
-        self.c3 = Conv2d(64, 128, (3, 3))
-        self.r3 = ReLU()
-        self.c4 = Conv2d(128, 256, (3, 3))
-        self.r4 = ReLU()
-        self.c5 = Conv2d(256, 512, (3, 3))
-        self.r5 = ReLU()
-        self.c6 = Conv2d(512, 256, (1, 1))
-        self.r6 = ReLU()
-        self.c7 = Conv2d(256, 128, (1, 1))
-        self.r7 = ReLU()
-        self.c8 = Conv2d(128, 32, (1, 1))
-        self.r8 = ReLU()
-        # self.c9 = Conv2d(128, 64, (1, 1))
-        # self.r9 = ReLU()
-        self.Lin1 = Linear(32, 8)
-        self.Lin2 = Linear(9, 1)
+        self.c1 = Conv2d(1, 8, (3, 3))
+        self.p1 = MaxPool2d(3, stride=1, padding=1)
+        self.r1 = LeakyReLU()
+        self.norm1 = BatchNorm2d(8)
+        self.drop1 = Dropout(self.dropout_rate)
+
+        self.c2 = Conv2d(8, 16, (3, 3))
+        self.p2 = MaxPool2d(3, stride=1, padding=1)
+        self.r2 = LeakyReLU()
+        self.norm2 = BatchNorm2d(16)
+        self.drop2 = Dropout(self.dropout_rate)
+
+        self.c3 = Conv2d(16, 32, (3, 3))
+        self.p3 = MaxPool2d(3, stride=1, padding=1)
+        self.r3 = LeakyReLU()
+        self.norm3 = BatchNorm2d(32)
+        self.drop3 = Dropout(self.dropout_rate)
+
+        self.c4 = Conv2d(32, 64, (3, 3))
+        self.p4 = MaxPool2d(3, stride=1, padding=1)
+        self.r4 = LeakyReLU()
+        self.norm4 = BatchNorm2d(64)
+        self.drop4 = Dropout(self.dropout_rate)
+
+        self.c5 = Conv2d(64, 128, (3, 3))
+        self.p5 = MaxPool2d(3, stride=1, padding=1)
+        self.r5 = LeakyReLU()
+        self.norm5 = BatchNorm2d(128)
+        self.drop5 = Dropout(self.dropout_rate)
+        #
+        self.c6 = Conv2d(128, 256, (3, 3))
+        self.p6 = MaxPool2d(3, stride=1, padding=1)
+        self.r6 = LeakyReLU()
+        self.norm6 = BatchNorm2d(256)
+        self.drop6 = Dropout(self.dropout_rate)
+
+        # self.c7 = Conv2d(64, 32, (3, 3))
+        # self.p7 = MaxPool2d(3, stride=1, padding=1)
+        # self.r7 = LeakyReLU()
+        # self.norm7 = BatchNorm2d(32)
+        # self.drop7 = Dropout(self.dropout_rate)
+
+        # self.c8 = Conv2d(16, 8, (3, 3))
+        # self.p8 = MaxPool2d(3, stride=1, padding=1)
+        # self.r8 = LeakyReLU()
+        # self.norm8 = BatchNorm2d(8)
+        # self.drop8 = Dropout(self.dropout_rate)
+
+        self.Lin1 = Linear(3*3*256, 1024, bias=True)
+        self.lr1 = LeakyReLU()
+        self.Lin2 = Linear(1024, 512, bias=True)
+        self.lr2 = LeakyReLU()
+        self.Lin3 = Linear(512, 128, bias=True)
+        self.lr3 = LeakyReLU()
+        self.Lin4 = Linear(128, 8, bias=True)
+        self.Lin5 = Linear(9, 1, bias=True)
 
     def forward(self, input, input2, in_training=False):
 
-        y = self.norm(input.reshape(-1, 1, 15, 15))
-        # y = input.reshape(-1, 1, 15, 15)
-        y = self.r1(self.c1(y))
-        y = self.r2(self.c2(y))
-        y = self.r3(self.c3(y))
-        y = self.r4(self.c4(y))
-        y = self.r5(self.c5(y))
-        y = self.r6(self.c6(y))
-        y = self.r7(self.c7(y))
-        y = self.r8(self.c8(y)).reshape((-1, 32))
-        #y = self.r9(self.c9(y)).reshape((-1, 64))
-        y = self.Lin1(y).reshape(-1, 8)
-        y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
-        y = self.Lin2(y).reshape(-1)
+        # y = neighboorPadding(input[:, 0].reshape((-1, 1, 15, 15)), input[:, 1].reshape((-1, 1, 15, 15)), 3)
+        y = input[:,0].reshape((-1, 1, 15, 15))
+        # y = data_transforms["train" if self.training else "val"](y)
+
+        y = self.drop1(self.norm1(self.r1(self.p1(self.c1(y)))))
+        # mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 15, 15)))
+        # y = y * mask
+
+        y = self.drop2(self.norm2(self.r2(self.p2(self.c2(y)))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+
+        y = self.drop3(self.norm3(self.r3(self.p3(self.c3(y)))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+
+        y = self.drop4(self.norm4(self.r4(self.p4(self.c4(y)))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+
+        y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+
+        y = self.drop6(self.norm6(self.r6(self.p6(self.c6(y)))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+
+        # y = self.drop7(self.r7(self.c7(y)))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+
+        # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
+        # y = self.Lin1(y)
+        # y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
+        y = self.lr1(self.Lin1(torch.flatten(y, start_dim=1)))
+        y = self.lr2(self.Lin2(y))
+        y = self.lr3(self.Lin3(y))
+        y = self.Lin4(y)
+        y = torch.flatten(self.Lin5(torch.cat((y, input2.reshape((-1, 1))), 1)))
 
         return y
 
@@ -68,7 +144,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            pred = self.forward(x_data, x2_data)
+            pred = self.forward(data_transforms['train'](x_data), x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
             test += x_data.shape[0]
@@ -88,7 +164,7 @@ class homemade_cnn(Module):
         for data in Data:
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            pred = self.forward(x_data, x2_data)
+            pred = self.forward(data_transforms['val'](x_data), x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
             test += x_data.shape[0]
@@ -112,75 +188,120 @@ class dataset(torch.utils.data.IterableDataset):
         return len(self.X)
 
 
-class ProgressiveDataset(torch.utils.data.IterableDataset):
-    def __init__(self, X, X2, Y, initial_subset_size):
-        self.X = X
-        self.X2 = X2
-        self.Y = Y
-        self.current_subset_size = initial_subset_size
-        self.subset_size = min(self.current_subset_size, len(self.X))
-
-    def __iter__(self):
-        self.subset_size = min(self.current_subset_size, len(self.X))
-        return zip(self.X[:self.subset_size], self.X2[:self.subset_size], self.Y[:self.subset_size])
-
-    def __len__(self):
-        return self.subset_size
-
 def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    batch_size = 20000
+    batch_size = 10000
     lr = 5e-4
-    max_epoch = 500
-    wandb.init(project='generalized CNN', mode='online')
+    max_epoch = 100
+    wandb.init(project='generalized CNN', mode='offline')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
 
     l_fn = MSELoss(reduction='mean')
 
-    l_scan_case_dist = torch.load("data/master_conv_clean.trc").type(torch.float)
-    # x = (l_scan_case_dist - l_scan_case_dist.min()) / (l_scan_case_dist.max() - l_scan_case_dist.min())
-    # torch.save(x, 'data/master_conv_norm.trc')
-    # ind = torch.where(l_scan_case_dist.sum(axis=1).sum(axis=1) != 0)[0]
-    # l_scan_case_dist = l_scan_case_dist[ind, :, :]
+    # l_scan_case_dist = torch.load("data/master_conv.trc").type(torch.float)
+    #
+    # with open('temp/master_ave_dist_list.pkl', 'rb') as f:
+    #     ave_dist = pickle.load(f)
+    # for i in range(ave_dist.__len__()):
+    #     if i == 0:
+    #         temp = ave_dist[i].reshape(-1)
+    #     else:
+    #         temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
+    # ave_dist = temp
+    # ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
+    #
+    # with open('temp/master_scan_dist_list.pkl', 'rb') as f:
+    #     center_dist = pickle.load(f)
+    # for i in range(center_dist.__len__()):
+    #     if i == 0:
+    #         temp = center_dist[i].reshape(-1)
+    #     else:
+    #         temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
+    # center_dist = temp
+    # center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
+    #
+    # ind = torch.where(center_dist != 0)[0]
+    # x_train = l_scan_case_dist[ind, :, :]
+    # x2_train = center_dist[ind]
+    # y_train = ave_dist[ind]
+    #
+    # x_train = x_train.reshape((-1, 1, 15, 15))
+    # # x_train_mask = torch.zeros_like(x_train)
+    # # x_train_mask[torch.where(x_train != 0)] = 1
+    # # x_train = torch.cat((x_train.reshape((-1, 1, 15, 15)), x_train_mask.reshape((-1, 1, 15, 15))), dim=1)
+    #
+    # torch.save(x_train, "data/x_train.trc")
+    # torch.save(x2_train, "data/x2_train.trc")
+    # torch.save(y_train, "data/y_train.trc")
 
-    with open('temp/master_ave_dist_list_clean.pkl', 'rb') as f:
-        ave_dist = pickle.load(f)
-    for i in range(ave_dist.__len__()):
-        if i == 0:
-            temp = ave_dist[i].reshape(-1)
-        else:
-            temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
-    ave_dist = temp
-    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
+    x_train = torch.load("data/x_train.trc")
+    x2_train = torch.load("data/x2_train.trc")
+    y_train = torch.load("data/y_train.trc")
 
-    with open('temp/master_scan_dist_list_clean.pkl', 'rb') as f:
-        center_dist = pickle.load(f)
-    for i in range(center_dist.__len__()):
-        if i == 0:
-            temp = center_dist[i].reshape(-1)
-        else:
-            temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
-    center_dist = temp
-    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
+    idx = torch.randperm(x_train.size(0))
+    # x_train = x_train[idx]
+    # x2_train = x2_train[idx]
+    # y_train = y_train[idx]
 
-    ind = torch.where(center_dist != 0)[0]
-    l_scan_case_dist = l_scan_case_dist[ind, :, :]
-    center_dist = center_dist[ind]
-    ave_dist = ave_dist[ind]
 
-    seed = torch.manual_seed(0)
-    train_gt, test_gt = torch.utils.data.random_split(center_dist, [int(np.round(center_dist.shape[0]*0.75)),
-                                                                    int(np.round(center_dist.shape[0]*0.25))], seed)
-    # train_gt.indices.sort()
-    # test_gt.indices.sort()
-    x_train, x_test = l_scan_case_dist[train_gt.indices], l_scan_case_dist[test_gt.indices]
-    x2_train, x2_test = center_dist[train_gt.indices], center_dist[test_gt.indices]
-    y_train, y_test = ave_dist[train_gt.indices], ave_dist[test_gt.indices]
+    # === Test data import ===
+    # l_scan_case_dist = torch.load("data/test_master_conv.trc").type(torch.float)
+    #
+    #
+    # with open('temp/test_master_ave_dist_list.pkl', 'rb') as f:
+    #     ave_dist = pickle.load(f)
+    # for i in range(ave_dist.__len__()):
+    #     if i == 0:
+    #         temp = ave_dist[i].reshape(-1)
+    #     else:
+    #         temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
+    # ave_dist = temp
+    # ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
+    #
+    # with open('temp/test_master_scan_dist_list.pkl', 'rb') as f:
+    #     center_dist = pickle.load(f)
+    # for i in range(center_dist.__len__()):
+    #     if i == 0:
+    #         temp = center_dist[i].reshape(-1)
+    #     else:
+    #         temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
+    # center_dist = temp
+    # center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
+    #
+    # ind = torch.where(center_dist != 0)[0]
+    # x_test = l_scan_case_dist[ind, :, :]
+    # x2_test = center_dist[ind]
+    # y_test = ave_dist[ind]
+    # #
+    # x_test = x_test.reshape((-1, 1, 15, 15))
+    # # x_test_mask = torch.zeros_like(x_test)
+    # # x_test_mask[torch.where(x_test != 0)] = 1
+    # # x_test = torch.cat((x_test.reshape((-1, 1, 15, 15)), x_test_mask.reshape((-1, 1, 15, 15))), dim=1)
+    # #
+    # torch.save(x_test, "data/x_test.trc")
+    # torch.save(x2_test, "data/x2_test.trc")
+    # torch.save(y_test, "data/y_test.trc")
 
-    train_dataset = dataset(x_train, x2_train, y_train)#, int(len(x_train)*0.1))
-    test_dataset = dataset(x_test, x2_test, y_test)#, int(len(x_test)*0.1))
+    x_test = torch.load("data/x_test.trc")
+    x2_test = torch.load("data/x2_test.trc")
+    y_test = torch.load("data/y_test.trc")
+    idx = torch.randperm(x_test.size(0))
+    # x_test = x_test[idx]
+    # x2_test = x2_test[idx]
+    # y_test = y_test[idx]
+
+
+    # x_test = torch.load("data/subset_x_test.trc")
+    # x2_test = torch.load("data/subset_x2_test.trc")
+    # y_test = torch.load("data/subset_y_test.trc")
+    # x_train = torch.load("data/subset_x_train.trc")
+    # x2_train = torch.load("data/subset_x2_train.trc")
+    # y_train = torch.load("data/subset_y_train.trc")
+
+    train_dataset = dataset(x_train, x2_train, y_train)
+    test_dataset = dataset(x_test, x2_test, y_test)
 
     train_data = DataLoader(train_dataset, batch_size=batch_size)
     test_data = DataLoader(test_dataset, batch_size=batch_size)
@@ -188,7 +309,8 @@ def train_generalized_CNN():
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
     # hmc = torch.load('NN_model/worthy-totem-6model.trc')
     opt = AdamW(hmc.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, 'min', factor=0.5, verbose=True)
+    lambda1 = lambda epoch: 0.97 ** epoch
+    scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
     wandb.watch(hmc, log_freq=10)
 
     test_loss = np.inf
@@ -204,7 +326,7 @@ def train_generalized_CNN():
         hmc.eval()
         test_loss = hmc.test_loop(test_data, l_fn, epoch)
         wandb.log({"Mean test loss": test_loss, "epoch": epoch})
-        scheduler.step(test_loss)
+        scheduler.step()
         pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
         wandb.log({'epoch': epoch, 'Learning rate': opt.param_groups[0]['lr']})
 
@@ -219,6 +341,7 @@ def train_generalized_CNN():
             # train_dataset.current_subset_size += int(np.round(len(x_train)*0.1))
             # test_dataset.current_subset_size += int(np.round(len(x_test)*0.1))
 
+
     torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
     print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
 
@@ -226,6 +349,22 @@ def train_generalized_CNN():
     val_test_loss = bestmodel.test_loop(test_data, l_fn, epoch)
     print('best model training loss: ' + str(val_train_loss))
     print('best model test loss: ' + str(val_test_loss))
+    return "NN_model/" + wandb.run.name + 'model.trc'
+
+
+def lol():
+    from matplotlib import  pyplot as plt
+    fig = plt.figure(figsize=(30, 50), layout='tight')
+    for i in range(32):
+        a = fig.add_subplot(8, 8, 2 * i + 1)
+        imgplot = plt.imshow(y[0, i, :, :].cpu().detach().numpy())
+        a.set_title('conv layer')
+        a.axis("off")
+        b = fig.add_subplot(8, 8, 2 * i + 2)
+        plt.imshow(input[0, 0, :, :].reshape((15, 15)).cpu().detach().numpy())
+        b.set_title('input')
+    plt.show()
+
 
 def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
     import dataprep
@@ -244,13 +383,18 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
     model.eval()
     
     ddataset = dataset(conv, torch.tensor(dist), torch.tensor(dist))
-    Data = DataLoader(ddataset, batch_size=10000)
+    Data = DataLoader(ddataset, batch_size=100000)
     pred = torch.zeros_like(torch.tensor(dist))
     with torch.no_grad():
         for i, data in enumerate(Data):
             x_data, x2_data, y_data = data
             x_data, x2_data = x_data.to(device).type(torch.float), x2_data.to(device).type(torch.float)
-            pred[i*10000:(i+1)*10000] = model.forward(x_data, x2_data)
+            pred[i*100000:(i+1)*100000] = model.forward(x_data[i*100000:(i+1)*100000].reshape((-1, 1, 15, 15)), x2_data[i*100000:(i+1)*100000].reshape((-1, 1)))
             torch.cuda.empty_cache()
 
     return pred
+
+if __name__ == '__main__':
+    nn_fid = train_generalized_CNN()
+    from analyse_nn import analyse
+    analyse(nn_fid)

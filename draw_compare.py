@@ -5,15 +5,16 @@ def create_image(mesh, current_epoch, showx, showy, pred_value, offscreen=True, 
 
     vp = Plotter(shape=(2, 3), axes=0, offscreen=offscreen, size=[1920, 1080])
     bottom_crop = 0.00
+
     vp1 = trimesh2vedo(mesh)
     vp1.cmap(on='points', cname='jet', input_array=showx, vmax=0.3, vmin=-0.3)
     vp1.crop(top=0, bottom=bottom_crop)
-    vp1.addScalarBar(title='one scan\ndeviation(mm)', pos=(0.65, 0.05))
+    vp1.addScalarBar(title='Original\nscan(mm)', pos=(0.65, 0.05))
 
     vp2 = trimesh2vedo(mesh)
     vp2.cmap(on='points', cname='jet', input_array=pred_value, vmax=0.3, vmin=-0.3)
     vp2.crop(top=0, bottom=bottom_crop)
-    vp2.addScalarBar(title='NN\ndeviation(mm)', pos=(0.65, 0.05))
+    vp2.addScalarBar(title='NN\nprediction(mm)', pos=(0.65, 0.05))
 
     vp3 = trimesh2vedo(mesh)
     vp3.cmap(on='points', cname='jet', input_array=showy, vmax=0.3, vmin=-0.3)
@@ -55,3 +56,18 @@ def create_image(mesh, current_epoch, showx, showy, pred_value, offscreen=True, 
     vp.screenshot(image_fname)
     vp.close()
     return image_fname
+
+def plot3d(data, cmap=None):
+    from matplotlib import  pyplot as plt
+    # Creating figure
+    fig = plt.figure(figsize=(10, 7))
+    ax = plt.axes(projection="3d")
+
+    # Creating plot
+    sc = ax.scatter3D(data[:,0], data[:,1], data[:,2], c=cmap)
+    plt.title("simple 3D scatter plot")
+    plt.colorbar(sc)
+
+    # show plot
+    plt.show()
+

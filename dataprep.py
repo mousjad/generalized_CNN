@@ -13,14 +13,15 @@ from multiprocessing import Pool, cpu_count
 import logging
 logging.getLogger("trimesh").setLevel(logging.ERROR)
 
-def create_scan_dist(dir_id="scan_data/"):
+def create_scan_dist(dir_id="scan_data/", mode='train'):
 
     master_scan_dist_list = []
     master_ave_dist_list = []
     master_ref_mesh_list = []
+    fid_dict = {'test': '_TEST', 'train': 'TRAIN'}
 
     for subdir_id in tqdm(os.listdir(dir_id)):
-        if subdir_id[0] != '.':
+        if subdir_id[-5:] == fid_dict[mode]:
             ref_mesh_fid = "cad_model/" + subdir_id.split('.')[0] + ".stl"
             ref_mesh = trimesh.load(ref_mesh_fid)
             subdir_id = dir_id + subdir_id + "/"
@@ -74,26 +75,19 @@ def combine_results(results):
 
 
 def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
-    num_processes = 8  # Number of CPU cores
-    data_length = len(master_ref_mesh_list)
-    chunk_size = data_length // num_processes
-
-    # Split the data into chunks for each process
-    chunks = [(i, master_ref_mesh_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))],
-               master_scan_dist_list[i*chunk_size:np.min(((i+1)*chunk_size, master_ref_mesh_list.__len__()))])
-              for i in range(num_processes)]
-
-    # # === multiprocessed ===
-    # with Pool(processes=8) as pool:
-    #     results = list(tqdm(pool.imap(process_mesh, chunks), total=len(chunks)))
-    #
-    # # Combine the results from different processes
-    # master_conv = combine_results(results)
-
-    # === Single process ===
     master_conv = []
     for i in tqdm(range(len(master_ref_mesh_list))):
-        master_conv.append(process_mesh((master_ref_mesh_list[i], master_scan_dist_list[i])))
+        # master_scan_dist_list[i].flags.writeable = False
+        hsh = str(master_scan_dist_list[i].sum().round(3))
+        if os.path.isfile(f"cad_conv/{hsh}.pkl"):
+            conv = torch.load(f"cad_conv/{hsh}.pkl")
+        else:
+            p_fid = 'cad_indices/' + master_ref_mesh_list[i].split('/')[1].split('.')[0] + '.pkl'
+            with open(p_fid, 'rb') as f:
+                p = pickle.load(f)
+            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False)
+            torch.save(conv, f"cad_conv/{hsh}.pkl")
+        master_conv.append(conv)
 
     return master_conv
 
@@ -166,7 +160,7 @@ def compute_indices(ref_mesh, shape, step, SE, k_tree):
                 v = vert - x - y
                 p = k_tree.query_ball_point(v, np.sqrt(2 * (step) ** 2))
                 if len(p) != 0:
-                    # p = list(set(p) - set(list(np.unique(SE))))
+                    p = list(set(p) - set(list(np.unique(SE))))
                     p = np.asarray(p)[
                         np.nonzero(ref_mesh.vertex_normals[p, :].dot(ni) > 0.67)]
                 if len(p) == 0:
@@ -187,7 +181,7 @@ def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True
                 if np.any(p == -1):
                     scan_case_dist[i % shape, i // shape] = 0
                 else:
-                    scan_case_dist[i % shape, i // shape] = scan_dist[p].mean() - scan_dist[u]
+                    scan_case_dist[i % shape, i // shape] = scan_dist[p].mean()
             l_scan_case_dist.append(scan_case_dist.copy())
     else:
         for u, ind in enumerate(indices):
@@ -200,48 +194,50 @@ def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True
     return torch.tensor(np.array(l_scan_case_dist))
 
 def single_conv_image(scan_dist, ref_mesh):
-    P = create_conv_image_indices(ref_mesh, f_id=None)
+    P = create_conv_image_indices(ref_mesh, f_id=None, step=0.25)
     conv = create_conv_image_from_indices(P, scan_dist)
     return conv
 
 
 if __name__ == '__main__':
-    # fid = 'cad_model/mod_nist_light_in_process.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/mod_nist_light.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/test_part_1_light.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/test_part_2_light.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    fid = 'cad_model/mod_nist_light_in_process.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    fid = 'cad_model/mod_nist_light.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    fid = 'cad_model/big_test_part_1_light.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    fid = 'cad_model/test_part_2_light.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
     fid = 'cad_model/test_part_3_light.stl'
     p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
     p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
     # fid = 'cad_model/test_part_4_light.stl'
     # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/test_part_5_light.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/big_test_part_1_light.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.50, p_fid)
+    fid = 'cad_model/test_part_5_light.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    fid = 'cad_model/test_part_6_light.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
 
-    print('done')
-    raise Exception('done')
+    print('indices done')
+    # raise Exception('done')
 
-    master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist()
-
-    with open('temp/master_scan_dist_list.pkl', 'wb') as f:
-        pickle.dump(master_scan_dist_list, f)
-    with open('temp/master_ave_dist_list.pkl', 'wb') as f:
-        pickle.dump(master_ave_dist_list, f)
-    with open('temp/master_ref_mesh_list.pkl', 'wb') as f:
-        pickle.dump(master_ref_mesh_list, f)
+    # === Train dataprep ===
+    print("started train dataprep\n")
+    # master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist(mode='train')
+    #
+    # with open('temp/master_scan_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_scan_dist_list, f)
+    # with open('temp/master_ave_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ave_dist_list, f)
+    # with open('temp/master_ref_mesh_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ref_mesh_list, f)
 
 
     with open('temp/master_scan_dist_list.pkl', 'rb') as f:
@@ -251,20 +247,34 @@ if __name__ == '__main__':
     with open('temp/master_ref_mesh_list.pkl', 'rb') as f:
         master_ref_mesh_list = pickle.load(f)
 
-    # # Remove Lulzbot data
-    # L_ind1 = (340, 460)
-    # L_ind2 = (488, 628)
-    #
-    # del master_scan_dist_list[L_ind2[0]:L_ind2[1]]
-    # del master_scan_dist_list[L_ind1[0]:L_ind1[1]]
-    #
-    # del master_ave_dist_list[L_ind2[0]:L_ind2[1]]
-    # del master_ave_dist_list[L_ind1[0]:L_ind1[1]]
-    #
-    # del master_ref_mesh_list[L_ind2[0]:L_ind2[1]]
-    # del master_ref_mesh_list[L_ind1[0]:L_ind1[1]]
 
     master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
     master_conv = torch.cat(master_conv)
     torch.save(master_conv, "data/master_conv.trc")
-    print('done')
+    print('train dataprep done')
+
+
+    # === Test dataprep ===
+    print("Started test dataprep\n")
+    # master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist(mode='test')
+    #
+    # with open('temp/test_master_scan_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_scan_dist_list, f)
+    # with open('temp/test_master_ave_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ave_dist_list, f)
+    # with open('temp/test_master_ref_mesh_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ref_mesh_list, f)
+
+
+    with open('temp/test_master_scan_dist_list.pkl', 'rb') as f:
+        master_scan_dist_list = pickle.load(f)
+    with open('temp/test_master_ref_mesh_list.pkl', 'rb') as f:
+        master_ave_dist_list = pickle.load(f)
+    with open('temp/test_master_ref_mesh_list.pkl', 'rb') as f:
+        master_ref_mesh_list = pickle.load(f)
+
+
+    master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
+    master_conv = torch.cat(master_conv)
+    torch.save(master_conv, "data/test_master_conv.trc")
+    print('test dataprep done')
