@@ -10,7 +10,7 @@ from draw_compare import create_image
 import igl
 import logging
 logging.getLogger("trimesh").setLevel(logging.ERROR)
-
+from model import homemade_cnn
 
 def analyse(nn_fid=None):
     if nn_fid is None:
@@ -18,7 +18,7 @@ def analyse(nn_fid=None):
 
     csv_result_fid = 'result/' + nn_fid[9:-4] + '.csv'
     with open(csv_result_fid, 'w') as csvfile:
-        csvwriter = csv.writer(csvfile)
+        csvwriter = csv.writer(csvfile, lineterminator="\n")
         csvwriter.writerow([
             nn_fid
         ])
@@ -64,7 +64,7 @@ def analyse(nn_fid=None):
 
                 ave_dist = np.mean(np.array(l_dist), axis=0)
                 cp_ave_ref_mesh = ref_mesh.copy()
-                cp_ave_ref_mesh.vertices -= np.array(nn_dist).reshape((-1, 1)) * cp_ave_ref_mesh.vertex_normals
+                cp_ave_ref_mesh.vertices += np.array(nn_dist).reshape((-1, 1)) * cp_ave_ref_mesh.vertex_normals
                 cp_ave_ref_mesh.export('result/' + nn_fid[9:-4] + '/ave_' + subdir_id.split('/')[-2] + '.stl')
 
                 for i in range(len(l_dist)):
@@ -80,7 +80,7 @@ def analyse(nn_fid=None):
                     ])
 
                     create_image(ref_mesh, 0, l_dist[i], ave_dist, np.array(l_nn_dist[i]), offscreen=True,
-                                 image_fname='result/' + nn_fid[9:-4] + '/nn_' + subdir_id.split('/')[-2] + '_' + l_scan_mesh[i].split('/')[-1].split('.')[-2] + '.jpg')
+                             image_fname='result/' + nn_fid[9:-4] + '/nn_' + subdir_id.split('/')[-2] + '_' + l_scan_mesh[i].split('/')[-1].split('.')[-2] + '.jpg')
 
 def compensate_and_save(nn_fid):
     ref_mesh_fid = 'cad_model/test_part_3_light.stl'
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     from dataprep import create_conv_image_indices
     # compare_average_to_cnn(r"C:\Generalized_CNN\scan_data\test_part_6_light.1", 'NN_model/noble-wood-58model.trc')
     # compensate_and_save('NN_model/noble-wood-58model.trc')
-    analyse("NN_model/wobbly-valley-199model.trc")
+    analyse("NN_model/ancient-wildflower-239model.trc")
 
 
 

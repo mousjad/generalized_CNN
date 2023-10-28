@@ -2,6 +2,7 @@ import trimesh
 import numpy as np
 import open3d as o3d
 from matplotlib import pyplot as plt
+from git import Repo
 
 def measure_distance(mesh, ref_mesh, clean=True):
     import igl
@@ -40,3 +41,13 @@ def view3d(ref_mesh, cm):
 
     # Show the plot
     plt.show()
+
+def git_push(path, commit):
+    try:
+        repo = Repo(path)
+        repo.git.add(update=True)
+        repo.index.commit(commit)
+        origin = repo.remote(name='origin')
+        origin.push()
+    except Exception as error:
+        print(f'Some error occured while pushing the code.\n{error}')

@@ -28,7 +28,7 @@ def create_scan_dist(dir_id="scan_data/", mode='train'):
 
 
             l_dir = os.listdir(subdir_id)
-            combs = combinations(l_dir, 4)
+            combs = combinations(l_dir, 5)
             for comb in combs:
                 l_dist = []
                 for f_id in comb:
@@ -158,7 +158,7 @@ def compute_indices(ref_mesh, shape, step, SE, k_tree):
         for u1, x in enumerate(X):
             for v1, y in enumerate(Y):
                 v = vert - x - y
-                p = k_tree.query_ball_point(v, np.sqrt(2 * (step) ** 2))
+                p = k_tree.query_ball_point(v, step)
                 if len(p) != 0:
                     p = list(set(p) - set(list(np.unique(SE))))
                     p = np.asarray(p)[
@@ -189,7 +189,7 @@ def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True
                 if np.any(p == -1):
                     scan_case_dist[i % shape, i // shape] = 0
                 else:
-                    scan_case_dist[i % shape, i // shape] = scan_dist[p].mean() - scan_dist[u]
+                    scan_case_dist[i % shape, i // shape] = scan_dist[p].mean()
             l_scan_case_dist.append(scan_case_dist.copy())
     return torch.tensor(np.array(l_scan_case_dist))
 
@@ -200,30 +200,30 @@ def single_conv_image(scan_dist, ref_mesh):
 
 
 if __name__ == '__main__':
-    fid = 'cad_model/mod_nist_light_in_process.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    fid = 'cad_model/mod_nist_light.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    fid = 'cad_model/big_test_part_1_light.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    fid = 'cad_model/test_part_2_light.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    fid = 'cad_model/test_part_3_light.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/test_part_4_light.stl'
+    # fid = 'cad_model/mod_nist_light_in_process.stl'
     # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.50, p_fid)
-    fid = 'cad_model/test_part_5_light.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    fid = 'cad_model/test_part_6_light.stl'
-    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/mod_nist_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/big_test_part_1_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/test_part_2_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/test_part_3_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # # fid = 'cad_model/test_part_4_light.stl'
+    # # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # # p = create_conv_image_indices(trimesh.load(fid), 15, 0.50, p_fid)
+    # fid = 'cad_model/test_part_5_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    # fid = 'cad_model/test_part_6_light.stl'
+    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
 
     print('indices done')
     # raise Exception('done')
@@ -250,12 +250,12 @@ if __name__ == '__main__':
 
     master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
     master_conv = torch.cat(master_conv)
-    torch.save(master_conv, "data/master_conv.trc")
+    torch.save(master_conv, "data/master_conv_with_mean.trc")
     print('train dataprep done')
 
 
     # === Test dataprep ===
-    print("Started test dataprep\n")
+    # print("Started test dataprep\n")
     # master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist(mode='test')
     #
     # with open('temp/test_master_scan_dist_list.pkl', 'wb') as f:
@@ -276,5 +276,5 @@ if __name__ == '__main__':
 
     master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
     master_conv = torch.cat(master_conv)
-    torch.save(master_conv, "data/test_master_conv.trc")
+    torch.save(master_conv, "data/test_master_conv_with_mean.trc")
     print('test dataprep done')
