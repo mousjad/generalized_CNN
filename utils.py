@@ -3,6 +3,7 @@ import numpy as np
 import open3d as o3d
 from matplotlib import pyplot as plt
 from git import Repo
+import os
 
 def measure_distance(mesh, ref_mesh, clean=True):
     import igl
@@ -44,10 +45,9 @@ def view3d(ref_mesh, cm):
 
 def git_push(path, commit):
     try:
-        git_ssh_identity_file = r"C:\Users\mojad.MECA\.ssh\id_ed25519"
-        git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
+        ssh_executable = os.path.join(os.getcwd(), 'my_ssh_executable.sh')
         repo = Repo(path)
-        with repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+        with repo.git.custom_environment(GIT_SSH=ssh_executable):
             repo.git.add(update=True)
             repo.index.commit(commit)
             origin = repo.remote(name='origin')
