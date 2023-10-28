@@ -98,28 +98,28 @@ class homemade_cnn(Module):
         # y = data_transforms["train" if self.training else "val"](y)
 
         y = self.drop1(self.norm1(self.r1(self.p1(self.c1(y)))))
-        # mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 15, 15)))
-        # y = y * mask
+        mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 15, 15)))
+        y = y * mask
 
         y = self.drop2(self.norm2(self.r2(self.p2(self.c2(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
+        mask = self.mask_max_pool(mask)
+        y = y * mask
 
         y = self.drop3(self.norm3(self.r3(self.p3(self.c3(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
+        mask = self.mask_max_pool(mask)
+        y = y * mask
 
         y = self.drop4(self.norm4(self.r4(self.p4(self.c4(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
+        mask = self.mask_max_pool(mask)
+        y = y * mask
 
         y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
+        mask = self.mask_max_pool(mask)
+        y = y * mask
 
         y = self.drop6(self.norm6(self.r6(self.p6(self.c6(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
+        mask = self.mask_max_pool(mask)
+        y = y * mask
 
         # y = self.drop7(self.r7(self.c7(y)))
         # mask = self.mask_max_pool(mask)
@@ -195,7 +195,7 @@ def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = 10000
     lr = 5e-3
-    max_epoch = 1500
+    max_epoch = 15
     wandb.init(project='generalized CNN', mode='online')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
@@ -373,7 +373,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    hmc = torch.load('NN_model/jumping-violet-236model.trc')
+    # hmc = torch.load('NN_model/jumping-violet-236model.trc')
     opt = AdamW(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
