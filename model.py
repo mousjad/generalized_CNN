@@ -205,7 +205,7 @@ def train_generalized_CNN():
 
     l_fn = MSELoss(reduction='mean')
 
-    l_scan_case_dist = torch.load("data/master_conv_with_mean_original.trc").type(torch.float)
+    l_scan_case_dist = torch.load("data/master_conv_with_mean.trc").type(torch.float)
 
     with open('temp/master_ave_dist_list.pkl', 'rb') as f:
        ave_dist = pickle.load(f)
@@ -278,10 +278,10 @@ def train_generalized_CNN():
     # x2_train = x2_train[idx]
     # y_train = y_train[idx]
 
-    # filt = torch.all(x_train.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
-    # x_train = x_train[filt]
-    # x2_train = x2_train[filt]
-    # y_train = y_train[filt]
+    filt = torch.all(x_train.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
+    x_train = x_train[filt]
+    x2_train = x2_train[filt]
+    y_train = y_train[filt]
 
     # === Test data import ===
     # l_scan_case_dist = torch.load("data/test_master_conv_with_mean.trc").type(torch.float)
@@ -373,7 +373,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    hmc = torch.load('NN_model/ancient-wildflower-239model.trc')
+    hmc = torch.load('NN_model/jumping-violet-236model.trc')
     opt = AdamW(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
