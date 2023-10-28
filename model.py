@@ -202,7 +202,6 @@ def train_generalized_CNN():
         wandb.run.name = 'offline_test'
 
     git_push(r"C:\Generalized_CNN\.git", f"{wandb.run.name}_automated_commit")
-
     l_fn = MSELoss(reduction='mean')
 
     l_scan_case_dist = torch.load("data/master_conv_with_mean.trc").type(torch.float)

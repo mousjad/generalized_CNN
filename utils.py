@@ -52,5 +52,6 @@ def git_push(path, commit):
             repo.index.commit(commit)
             origin = repo.remote(name='origin')
             origin.push()
+            print("Commit successful")
     except Exception as error:
         print(f'Some error occured while pushing the code.\n{error}')
