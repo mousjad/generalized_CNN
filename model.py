@@ -80,16 +80,16 @@ class homemade_cnn(Module):
         # self.norm8 = BatchNorm2d(8)
         # self.drop8 = Dropout(self.dropout_rate)
 
-        self.Lin1 = Linear(3 * 3 * 256, 1024, bias=True)
+        self.Lin1 = Linear(3 * 3 * 256, 1024, bias=False)
         self.lr1 = LeakyReLU()
-        self.Lin2 = Linear(1024, 512, bias=True)
+        self.Lin2 = Linear(1024, 512, bias=False)
         self.lr2 = LeakyReLU()
-        self.Lin3 = Linear(512, 128, bias=True)
+        self.Lin3 = Linear(512, 128, bias=False)
         self.lr3 = LeakyReLU()
-        self.Lin4 = Linear(128, 8, bias=True)
+        self.Lin4 = Linear(128, 8, bias=False)
         self.input2_drop = Dropout(0.5)
         self.lin_input2 = Linear(1, 1)
-        self.Lin5 = Linear(8, 1, bias=True)
+        self.Lin5 = Linear(8, 1, bias=False)
 
 
     def forward(self, input, input2, in_training=False):
