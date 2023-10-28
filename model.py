@@ -231,6 +231,7 @@ def train_generalized_CNN():
     x2_train = center_dist[ind]
     y_train = ave_dist[ind]
 
+    x_train = x_train.reshape((-1, 1, 15, 15))
     sum = x_train.sum(axis=(2, 3))
     train_filt_max = np.percentile(sum, 99)
     train_filt_min = np.percentile(sum, 1)
@@ -272,7 +273,6 @@ def train_generalized_CNN():
     x2_train = x2_train[idx]
     y_train = y_train[idx]
 
-    x_train = x_train.reshape((-1, 1, 15, 15))
     x_train_mask = torch.zeros_like(x_train)
     x_train_mask[torch.where(x_train != 0)] = 1
     x_train = torch.cat((x_train.reshape((-1, 1, 15, 15)), x_train_mask.reshape((-1, 1, 15, 15))), dim=1)
