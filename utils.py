@@ -45,13 +45,9 @@ def view3d(ref_mesh, cm):
 
 def git_push(path, commit):
     try:
-        ssh_executable = os.path.join(os.getcwd(), 'my_ssh_executable.sh')
         repo = Repo(path)
-        with repo.git.custom_environment(GIT_SSH=ssh_executable):
-            repo.git.add(update=True)
-            repo.index.commit(commit)
-            origin = repo.remote(name='origin')
-            origin.push()
-            print("Commit successful")
+        repo.git.add(update=True)
+        repo.index.commit(commit)
+        print("Commit successful, need to push manually.")
     except Exception as error:
         print(f'Some error occured while pushing the code.\n{error}')

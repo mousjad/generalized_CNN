@@ -196,7 +196,7 @@ def train_generalized_CNN():
     batch_size = 10000
     lr = 5e-3
     max_epoch = 1500
-    wandb.init(project='generalized CNN', mode='offline')
+    wandb.init(project='generalized CNN', mode='online')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
@@ -272,10 +272,10 @@ def train_generalized_CNN():
     x2_train = torch.load("data/x2_train.trc")
     y_train = torch.load("data/y_train.trc")
 
-    # idx = torch.randperm(x_train.size(0))
-    # x_train = x_train[idx]
-    # x2_train = x2_train[idx]
-    # y_train = y_train[idx]
+    idx = torch.randperm(x_train.size(0))
+    x_train = x_train[idx]
+    x2_train = x2_train[idx]
+    y_train = y_train[idx]
 
     filt = torch.all(x_train.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
     x_train = x_train[filt]
@@ -283,75 +283,81 @@ def train_generalized_CNN():
     y_train = y_train[filt]
 
     # === Test data import ===
-    # l_scan_case_dist = torch.load("data/test_master_conv_with_mean.trc").type(torch.float)
+    l_scan_case_dist = torch.load("data/test_master_conv_with_mean.trc").type(torch.float)
+
+
+    with open('temp/test_master_ave_dist_list.pkl', 'rb') as f:
+       ave_dist = pickle.load(f)
+    for i in range(ave_dist.__len__()):
+       if i == 0:
+           temp = ave_dist[i].reshape(-1)
+       else:
+           temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
+    ave_dist = temp
+    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
+
+    with open('temp/test_master_scan_dist_list.pkl', 'rb') as f:
+       center_dist = pickle.load(f)
+    for i in range(center_dist.__len__()):
+       if i == 0:
+           temp = center_dist[i].reshape(-1)
+       else:
+           temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
+    center_dist = temp
+    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
+
+    ind = torch.where(center_dist != 0)[0]
+    x_test = l_scan_case_dist[ind, :, :]
+    x2_test = center_dist[ind]
+    y_test = ave_dist[ind]
     #
+    x_test = x_test.reshape((-1, 1, 15, 15))
+    # x_test_mask = torch.zeros_like(x_test)
+    # x_test_mask[torch.where(x_test != 0)] = 1
+    # x_test = torch.cat((x_test.reshape((-1, 1, 15, 15)), x_test_mask.reshape((-1, 1, 15, 15))), dim=1)
     #
-    # with open('temp/test_master_ave_dist_list.pkl', 'rb') as f:
-    #    ave_dist = pickle.load(f)
-    # for i in range(ave_dist.__len__()):
-    #    if i == 0:
-    #        temp = ave_dist[i].reshape(-1)
-    #    else:
-    #        temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
-    # ave_dist = temp
-    # ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
-    #
-    # with open('temp/test_master_scan_dist_list.pkl', 'rb') as f:
-    #    center_dist = pickle.load(f)
-    # for i in range(center_dist.__len__()):
-    #    if i == 0:
-    #        temp = center_dist[i].reshape(-1)
-    #    else:
-    #        temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
-    # center_dist = temp
-    # center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
-    #
-    # ind = torch.where(center_dist != 0)[0]
-    # x_test = l_scan_case_dist[ind, :, :]
-    # x2_test = center_dist[ind]
-    # y_test = ave_dist[ind]
-    # #
-    # x_test = x_test.reshape((-1, 1, 15, 15))
-    # # x_test_mask = torch.zeros_like(x_test)
-    # # x_test_mask[torch.where(x_test != 0)] = 1
-    # # x_test = torch.cat((x_test.reshape((-1, 1, 15, 15)), x_test_mask.reshape((-1, 1, 15, 15))), dim=1)
-    # #
-    #
-    # # Filtering
-    # sum = x_test.sum(axis=(2, 3))
-    # test_filt_max = np.percentile(sum, 99)
-    # test_filt_min = np.percentile(sum, 1)
-    # filt1 = (sum <= test_filt_max)
-    # filt2 = (sum >= test_filt_min)
-    # filt = (filt1) & (filt2)
-    # x_test = x_test[torch.nonzero(filt[:, 0])[:, 0]]
-    # x2_test = x2_test[torch.nonzero(filt[:, 0])[:, 0]]
-    # y_test = y_test[torch.nonzero(filt[:, 0])[:, 0]]
-    #
-    # diff = x2_test - y_test
-    # test_filt_max = np.percentile(diff, 99)
-    # test_filt_min = np.percentile(diff, 1)
-    # filt1 = (diff <= test_filt_max)
-    # filt2 = (diff >= test_filt_min)
-    # filt = (filt1) & (filt2)
-    # x_test = x_test[torch.nonzero(filt)[:, 0]]
-    # x2_test = x2_test[torch.nonzero(filt)[:, 0]]
-    # y_test = y_test[torch.nonzero(filt)[:, 0]]
-    #
-    # filt = torch.where(x_test != 0)
-    # x_test[filt] = x_test[filt] + 0.5
-    #
-    # torch.save(x_test, "data/x_test.trc")
-    # torch.save(x2_test, "data/x2_test.trc")
-    # torch.save(y_test, "data/y_test.trc")
+
+    # Filtering
+    sum = x_test.sum(axis=(2, 3))
+    test_filt_max = np.percentile(sum, 99)
+    test_filt_min = np.percentile(sum, 1)
+    filt1 = (sum <= test_filt_max)
+    filt2 = (sum >= test_filt_min)
+    filt = (filt1) & (filt2)
+    x_test = x_test[torch.nonzero(filt[:, 0])[:, 0]]
+    x2_test = x2_test[torch.nonzero(filt[:, 0])[:, 0]]
+    y_test = y_test[torch.nonzero(filt[:, 0])[:, 0]]
+
+    diff = x2_test - y_test
+    test_filt_max = np.percentile(diff, 99)
+    test_filt_min = np.percentile(diff, 1)
+    filt1 = (diff <= test_filt_max)
+    filt2 = (diff >= test_filt_min)
+    filt = (filt1) & (filt2)
+    x_test = x_test[torch.nonzero(filt)[:, 0]]
+    x2_test = x2_test[torch.nonzero(filt)[:, 0]]
+    y_test = y_test[torch.nonzero(filt)[:, 0]]
+
+    filt = torch.where(x_test != 0)
+    x_test[filt] = x_test[filt] + 0.5
+
+    torch.save(x_test, "data/x_test.trc")
+    torch.save(x2_test, "data/x2_test.trc")
+    torch.save(y_test, "data/y_test.trc")
 
     x_test = torch.load("data/x_test.trc")
     x2_test = torch.load("data/x2_test.trc")
     y_test = torch.load("data/y_test.trc")
-    # idx = torch.randperm(x_test.size(0))
-    # x_test = x_test[idx]
-    # x2_test = x2_test[idx]
-    # y_test = y_test[idx]
+
+    idx = torch.randperm(x_test.size(0))
+    x_test = x_test[idx]
+    x2_test = x2_test[idx]
+    y_test = y_test[idx]
+
+    filt = torch.all(x_test.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
+    x_test = x_test[filt]
+    x2_test = x2_test[filt]
+    y_test = y_test[filt]
 
     # filt = torch.all(x_test.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
     # x_test = x_test[filt]
