@@ -231,11 +231,6 @@ def train_generalized_CNN():
     x2_train = center_dist[ind]
     y_train = ave_dist[ind]
 
-    x_train = x_train.reshape((-1, 1, 15, 15))
-    # x_train_mask = torch.zeros_like(x_train)
-    # x_train_mask[torch.where(x_train != 0)] = 1
-    # x_train = torch.cat((x_train.reshape((-1, 1, 15, 15)), x_train_mask.reshape((-1, 1, 15, 15))), dim=1)
-
     sum = x_train.sum(axis=(2, 3))
     train_filt_max = np.percentile(sum, 99)
     train_filt_min = np.percentile(sum, 1)
@@ -277,6 +272,11 @@ def train_generalized_CNN():
     x2_train = x2_train[idx]
     y_train = y_train[idx]
 
+    x_train = x_train.reshape((-1, 1, 15, 15))
+    x_train_mask = torch.zeros_like(x_train)
+    x_train_mask[torch.where(x_train != 0)] = 1
+    x_train = torch.cat((x_train.reshape((-1, 1, 15, 15)), x_train_mask.reshape((-1, 1, 15, 15))), dim=1)
+
     # filt = torch.all(x_train.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
     # x_train = x_train[filt]
     # x2_train = x2_train[filt]
@@ -310,12 +310,8 @@ def train_generalized_CNN():
     x_test = l_scan_case_dist[ind, :, :]
     x2_test = center_dist[ind]
     y_test = ave_dist[ind]
-    #
+
     x_test = x_test.reshape((-1, 1, 15, 15))
-    # x_test_mask = torch.zeros_like(x_test)
-    # x_test_mask[torch.where(x_test != 0)] = 1
-    # x_test = torch.cat((x_test.reshape((-1, 1, 15, 15)), x_test_mask.reshape((-1, 1, 15, 15))), dim=1)
-    #
 
     # Filtering
     sum = x_test.sum(axis=(2, 3))
@@ -353,6 +349,10 @@ def train_generalized_CNN():
     x_test = x_test[idx]
     x2_test = x2_test[idx]
     y_test = y_test[idx]
+
+    x_test_mask = torch.zeros_like(x_test)
+    x_test_mask[torch.where(x_test != 0)] = 1
+    x_test = torch.cat((x_test.reshape((-1, 1, 15, 15)), x_test_mask.reshape((-1, 1, 15, 15))), dim=1)
 
     # filt = torch.all(x_test.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
     # x_test = x_test[filt]
