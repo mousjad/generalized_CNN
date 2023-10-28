@@ -277,10 +277,10 @@ def train_generalized_CNN():
     x2_train = x2_train[idx]
     y_train = y_train[idx]
 
-    filt = torch.all(x_train.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
-    x_train = x_train[filt]
-    x2_train = x2_train[filt]
-    y_train = y_train[filt]
+    # filt = torch.all(x_train.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
+    # x_train = x_train[filt]
+    # x2_train = x2_train[filt]
+    # y_train = y_train[filt]
 
     # === Test data import ===
     l_scan_case_dist = torch.load("data/test_master_conv_with_mean.trc").type(torch.float)
@@ -353,11 +353,6 @@ def train_generalized_CNN():
     x_test = x_test[idx]
     x2_test = x2_test[idx]
     y_test = y_test[idx]
-
-    filt = torch.all(x_test.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
-    x_test = x_test[filt]
-    x2_test = x2_test[filt]
-    y_test = y_test[filt]
 
     # filt = torch.all(x_test.reshape((-1, 1, 15*15)) != 0, dim=2)[:, 0]
     # x_test = x_test[filt]
