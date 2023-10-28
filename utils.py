@@ -44,10 +44,13 @@ def view3d(ref_mesh, cm):
 
 def git_push(path, commit):
     try:
+        git_ssh_identity_file = r"C:\Users\mojad.MECA\.ssh\id_ed25519"
+        git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
         repo = Repo(path)
-        repo.git.add(update=True)
-        repo.index.commit(commit)
-        origin = repo.remote(name='origin')
-        origin.push()
+        with repo.git.custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+            repo.git.add(update=True)
+            repo.index.commit(commit)
+            origin = repo.remote(name='origin')
+            origin.push()
     except Exception as error:
         print(f'Some error occured while pushing the code.\n{error}')
