@@ -135,7 +135,7 @@ if __name__ == '__main__':
     from dataprep import create_conv_image_indices
     # compare_average_to_cnn(r"C:\Generalized_CNN\scan_data\test_part_6_light.1", 'NN_model/noble-wood-58model.trc')
     # compensate_and_save('NN_model/noble-wood-58model.trc')
-    analyse("NN_model/ancient-wildflower-239model.trc")
+    analyse("NN_model/distinctive-snowflake-255model.trc")
 
 
 

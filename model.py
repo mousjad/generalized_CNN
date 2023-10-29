@@ -288,7 +288,7 @@ def train_generalized_CNN():
     batch_size = 10000
     lr = 5e-3
     max_epoch = 100
-    wandb.init(project='generalized CNN', mode='online')
+    wandb.init(project='generalized CNN', mode='offline')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
@@ -310,7 +310,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    # hmc = torch.load('NN_model/jumping-violet-236model.trc')
+    hmc = torch.load("NN_model/distinctive-snowflake-255model.trc")
     opt = AdamW(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
@@ -391,8 +391,11 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
         for i, data in enumerate(Data):
             x_data, x2_data, y_data = data
             x_data, x2_data = x_data.to(device).type(torch.float), x2_data.to(device).type(torch.float)
+            x_mask = torch.zeros_like(x_data)
+            x_mask[torch.where(x_data != 0)] = 1
+            x_data = torch.cat((x_data.reshape((-1, 1, 15, 15)), x_mask.reshape((-1, 1, 15, 15))), dim=1)
             pred[i * 100000:(i + 1) * 100000] = model.forward(
-                x_data[i * 100000:(i + 1) * 100000].reshape((-1, 1, 15, 15)),
+                x_data[i * 100000:(i + 1) * 100000].reshape((-1, 2, 15, 15)),
                 x2_data[i * 100000:(i + 1) * 100000].reshape((-1, 1)))
             torch.cuda.empty_cache()
 
