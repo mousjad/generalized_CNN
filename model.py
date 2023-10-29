@@ -275,7 +275,7 @@ def filter_data(mode):
     x_train_mask[torch.where(x_train != 0)] = 1
     x_train = torch.cat((x_train.reshape((-1, 1, 15, 15)), x_train_mask.reshape((-1, 1, 15, 15))), dim=1)
 
-    filt = torch.where(x_train[:, 1, 15, 15].sum(axis=(1, 2)) >= 15)[0]
+    filt = torch.where(x_train[:, 1].sum(axis=(1, 2)) >= 15)[0]
     x_train = x_train[filt]
     x2_train = x2_train[filt]
     y_train = y_train[filt]
