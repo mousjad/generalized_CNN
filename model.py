@@ -196,7 +196,7 @@ def train_generalized_CNN():
     batch_size = 10000
     lr = 5e-3
     max_epoch = 100
-    wandb.init(project='generalized CNN', mode='online')
+    wandb.init(project='generalized CNN', mode='offline')
     wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
