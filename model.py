@@ -153,6 +153,7 @@ class homemade_cnn(Module):
 
             # Backpropagation
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
             optimizer.step()
             wandb.log({"Train loss": loss.item(), "epoch": epoch})
 
