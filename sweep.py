@@ -78,5 +78,5 @@ sweep = {
 
 # 3: Start the sweep
 sweep_id = wandb.sweep(sweep=sweep, project="generalized CNN")
-from model import train_generalized_CNN
+from model import train_generalized_CNN, homemade_cnn
 wandb.agent(sweep_id, function=train_generalized_CNN(), count=10)
