@@ -32,37 +32,41 @@ class homemade_cnn(Module):
         self.dropout_rate = 0
         self.mask_max_pool = MaxPool2d(3, stride=1)
 
-        self.c1 = Conv2d(1, 8, (3, 3))
+        w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
+        w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
+        w10 = wandb.config.w10
+
+        self.c1 = Conv2d(1, w1, (3, 3))
         self.p1 = MaxPool2d(3, stride=1, padding=1)
         self.r1 = LeakyReLU()
         self.norm1 = BatchNorm2d(8)
         self.drop1 = Dropout(self.dropout_rate)
 
-        self.c2 = Conv2d(8, 16, (3, 3))
+        self.c2 = Conv2d(w1, w2, (3, 3))
         self.p2 = MaxPool2d(3, stride=1, padding=1)
         self.r2 = LeakyReLU()
         self.norm2 = BatchNorm2d(16)
         self.drop2 = Dropout(self.dropout_rate)
 
-        self.c3 = Conv2d(16, 32, (3, 3))
+        self.c3 = Conv2d(w2, w3, (3, 3))
         self.p3 = MaxPool2d(3, stride=1, padding=1)
         self.r3 = LeakyReLU()
         self.norm3 = BatchNorm2d(32)
         self.drop3 = Dropout(self.dropout_rate)
 
-        self.c4 = Conv2d(32, 64, (3, 3))
+        self.c4 = Conv2d(w3, w4, (3, 3))
         self.p4 = MaxPool2d(3, stride=1, padding=1)
         self.r4 = LeakyReLU()
         self.norm4 = BatchNorm2d(64)
         self.drop4 = Dropout(self.dropout_rate)
 
-        self.c5 = Conv2d(64, 128, (3, 3))
+        self.c5 = Conv2d(w4, w5, (3, 3))
         self.p5 = MaxPool2d(3, stride=1, padding=1)
         self.r5 = LeakyReLU()
         self.norm5 = BatchNorm2d(128)
         self.drop5 = Dropout(self.dropout_rate)
         #
-        self.c6 = Conv2d(128, 256, (3, 3))
+        self.c6 = Conv2d(w5, w6, (3, 3))
         self.p6 = MaxPool2d(3, stride=1, padding=1)
         self.r6 = LeakyReLU()
         self.norm6 = BatchNorm2d(256)
@@ -80,16 +84,16 @@ class homemade_cnn(Module):
         # self.norm8 = BatchNorm2d(8)
         # self.drop8 = Dropout(self.dropout_rate)
 
-        self.Lin1 = Linear(3 * 3 * 256, 1024, bias=False)
+        self.Lin1 = Linear(3 * 3 * w6, w7, bias=False)
         self.lr1 = LeakyReLU()
-        self.Lin2 = Linear(1024, 512, bias=False)
+        self.Lin2 = Linear(w7, w8, bias=False)
         self.lr2 = LeakyReLU()
-        self.Lin3 = Linear(512, 128, bias=False)
+        self.Lin3 = Linear(w8, w9, bias=False)
         self.lr3 = LeakyReLU()
-        self.Lin4 = Linear(128, 8, bias=False)
+        self.Lin4 = Linear(w9, w10, bias=False)
         self.input2_drop = Dropout(0.5)
         self.lin_input2 = Linear(1, 1)
-        self.Lin5 = Linear(8, 1, bias=False)
+        self.Lin5 = Linear(w10, 1, bias=False)
 
 
     def forward(self, input, input2, in_training=False):
@@ -284,12 +288,28 @@ def filter_data(mode):
 
 
 def train_generalized_CNN():
+
+    hyperparameter_defaults = dict(
+        batch_size=10000,
+        lr=5e-3,
+        epochs=2,
+        w1=16,
+        w2=32,
+        w3=64,
+        w4=128,
+        w5=256,
+        w6=512,
+        w7=1024,
+        w8=256,
+        w9=128,
+        w10=8
+    )
+
+    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    batch_size = 10000
-    lr = 5e-3
-    max_epoch = 100
-    wandb.init(project='generalized CNN', mode='offline')
-    wandb.config = {"learning_rate": lr, "epochs": max_epoch, "batch_size": batch_size}
+    batch_size = wandb.config.batch_size
+    lr = wandb.config.lr
+    max_epoch = 30
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
 
@@ -391,9 +411,13 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
         for i, data in enumerate(Data):
             x_data, x2_data, y_data = data
             x_data, x2_data = x_data.to(device).type(torch.float), x2_data.to(device).type(torch.float)
+
+            filt = torch.where(x_data != 0)
+            x_data[filt] = x_data[filt] + 0.5
             x_mask = torch.zeros_like(x_data)
             x_mask[torch.where(x_data != 0)] = 1
             x_data = torch.cat((x_data.reshape((-1, 1, 15, 15)), x_mask.reshape((-1, 1, 15, 15))), dim=1)
+
             pred[i * 100000:(i + 1) * 100000] = model.forward(
                 x_data[i * 100000:(i + 1) * 100000].reshape((-1, 2, 15, 15)),
                 x2_data[i * 100000:(i + 1) * 100000].reshape((-1, 1)))
@@ -404,5 +428,5 @@ def nn_compensate(nn_model_fid, dist, ref_mesh_fid):
 
 if __name__ == '__main__':
     nn_fid = train_generalized_CNN()
-    from analyse_nn import analyse
-    analyse(nn_fid)
+    # from analyse_nn import analyse
+    # analyse(nn_fid)

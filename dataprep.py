@@ -194,7 +194,7 @@ def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True
     return torch.tensor(np.array(l_scan_case_dist))
 
 def single_conv_image(scan_dist, ref_mesh):
-    P = create_conv_image_indices(ref_mesh, f_id=None, step=0.25)
+    P = create_conv_image_indices(ref_mesh, f_id=None, step=0.75)
     conv = create_conv_image_from_indices(P, scan_dist)
     return conv
 
@@ -221,9 +221,9 @@ if __name__ == '__main__':
     # fid = 'cad_model/test_part_5_light.stl'
     # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
     # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
-    # fid = 'cad_model/test_part_6_light.stl'
-    # p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
+    fid = 'cad_model/test_part_6_light.stl'
+    p_fid = 'cad_indices/' + fid.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid), 15, 0.75, p_fid)
 
     print('indices done')
     # raise Exception('done')
