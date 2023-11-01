@@ -16,8 +16,8 @@ sweep = {
         },
         "lr": {
             "distribution": "uniform",
-            "max": 0.1,
-            "min": 0.0001
+            "max": 1e-3,
+            "min": 1e-5
         },
         "w1": {
             "distribution": "int_uniform",
