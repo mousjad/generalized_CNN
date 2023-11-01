@@ -371,6 +371,7 @@ def train_generalized_CNN():
     val_test_loss = bestmodel.test_loop(test_data, l_fn, epoch)
     print('best model training loss: ' + str(val_train_loss))
     print('best model test loss: ' + str(val_test_loss))
+    torch.cuda.empty_cache()
     return "NN_model/" + wandb.run.name + 'model.trc'
 
 

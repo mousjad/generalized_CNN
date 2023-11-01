@@ -7,7 +7,7 @@ sweep = {
     "method": "random",
     "name": "homemade_CNN_sweep",
     "metric": {
-        "name": '"',
+        "name": 'Mean train loss',
         "goal": "minimize"
     },
     "parameters": {
