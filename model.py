@@ -155,6 +155,8 @@ class homemade_cnn(Module):
             loss = loss_fn(pred, y_data)
             Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
+            l2 = pred - y_data
+            print(np.percentile(l2.cpu().detach().numpy(), 50))
 
             # Backpropagation
             loss.backward()
