@@ -293,16 +293,16 @@ def train_generalized_CNN():
         batch_size=1000,
         lr=5e-3,
         epochs=2,
-        w1=4,
-        w2=8,
-        w3=16,
-        w4=32,
-        w5=64,
-        w6=128,
-        w7=256,
-        w8=64,
-        w9=16,
-        w10=8
+        w1=1,
+        w2=2,
+        w3=4,
+        w4=8,
+        w5=16,
+        w6=32,
+        w7=64,
+        w8=16,
+        w9=8,
+        w10=2
     )
 
     wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
