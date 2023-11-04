@@ -156,7 +156,7 @@ class homemade_cnn(Module):
             Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
             l2 = pred - y_data
-            print(np.percentile(l2.cpu().detach().numpy(), 50))
+            wandb.log({"Train loss": np.percentile(l2.cpu().detach().numpy(), 50), "epoch": epoch})
 
             # Backpropagation
             loss.backward()
