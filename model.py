@@ -36,13 +36,13 @@ class homemade_cnn(Module):
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
 
-        self.c1 = Conv2d(1, w1, (3, 3))
+        self.c1 = Conv2d(1, w1, (5, 5))
         self.p1 = MaxPool2d(3, stride=1, padding=1)
         self.r1 = ReLU()
         self.norm1 = BatchNorm2d(w1)
         self.drop1 = Dropout(self.dropout_rate)
 
-        self.c2 = Conv2d(w1, w2, (3, 3))
+        self.c2 = Conv2d(w1, w2, (5, 5))
         self.p2 = MaxPool2d(3, stride=1, padding=1)
         self.r2 = ReLU()
         self.norm2 = BatchNorm2d(w2)
@@ -60,17 +60,17 @@ class homemade_cnn(Module):
         self.norm4 = BatchNorm2d(w4)
         self.drop4 = Dropout(self.dropout_rate)
 
-        self.c5 = Conv2d(w4, w5, (3, 3))
-        self.p5 = MaxPool2d(3, stride=1, padding=1)
-        self.r5 = ReLU()
-        self.norm5 = BatchNorm2d(w5)
-        self.drop5 = Dropout(self.dropout_rate)
-        #
-        self.c6 = Conv2d(w5, w6, (3, 3))
-        self.p6 = MaxPool2d(3, stride=1, padding=1)
-        self.r6 = ReLU()
-        self.norm6 = BatchNorm2d(w6)
-        self.drop6 = Dropout(self.dropout_rate)
+        # self.c5 = Conv2d(w4, w5, (3, 3))
+        # self.p5 = MaxPool2d(3, stride=1, padding=1)
+        # self.r5 = ReLU()
+        # self.norm5 = BatchNorm2d(w5)
+        # self.drop5 = Dropout(self.dropout_rate)
+        # #
+        # self.c6 = Conv2d(w5, w6, (3, 3))
+        # self.p6 = MaxPool2d(3, stride=1, padding=1)
+        # self.r6 = ReLU()
+        # self.norm6 = BatchNorm2d(w6)
+        # self.drop6 = Dropout(self.dropout_rate)
 
         # self.c7 = Conv2d(64, 32, (3, 3))
         # self.p7 = MaxPool2d(3, stride=1, padding=1)
@@ -293,11 +293,11 @@ def train_generalized_CNN():
         batch_size=1000,
         lr=5e-3,
         epochs=2,
-        w1=1,
-        w2=2,
-        w3=4,
-        w4=8,
-        w5=16,
+        w1=4,
+        w2=8,
+        w3=16,
+        w4=32,
+        # w5=16,
         w6=32,
         w7=64,
         w8=16,
@@ -305,7 +305,7 @@ def train_generalized_CNN():
         w10=2
     )
 
-    wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
+    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
