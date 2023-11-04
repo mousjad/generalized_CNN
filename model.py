@@ -31,6 +31,7 @@ class homemade_cnn(Module):
         self.device = device
         self.dropout_rate = 0
         self.mask_max_pool = MaxPool2d(3, stride=1)
+        self.mask_max_pool5 = MaxPool2d(5, stride=1)
 
         w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
@@ -102,11 +103,11 @@ class homemade_cnn(Module):
         # y = data_transforms["train" if self.training else "val"](y)
 
         y = self.drop1(self.norm1(self.r1(self.p1(self.c1(y)))))
-        mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 15, 15)))
+        mask = self.mask_max_pool5(input[:, 1].reshape((-1, 1, 15, 15)))
         y = y * mask
 
         y = self.drop2(self.norm2(self.r2(self.p2(self.c2(y)))))
-        mask = self.mask_max_pool(mask)
+        mask = self.mask_max_pool5(mask)
         y = y * mask
 
         y = self.drop3(self.norm3(self.r3(self.p3(self.c3(y)))))
