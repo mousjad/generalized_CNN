@@ -297,7 +297,7 @@ def train_generalized_CNN():
         w2=8,
         w3=16,
         w4=32,
-        # w5=16,
+        w5=16,
         w6=32,
         w7=64,
         w8=16,
