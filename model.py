@@ -305,7 +305,7 @@ def train_generalized_CNN():
         w10=8
     )
 
-    wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
+    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
