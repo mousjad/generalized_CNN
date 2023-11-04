@@ -150,7 +150,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            pred = self.forward(data_transforms(x_data), x2_data)
+            pred = self.forward(x_data, x2_data)
             loss = loss_fn(pred, y_data)
             Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
