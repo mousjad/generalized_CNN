@@ -18,12 +18,15 @@ def create_scan_dist(dir_id="scan_data/", mode='train'):
     master_scan_dist_list = []
     master_ave_dist_list = []
     master_ref_mesh_list = []
+    master_scan_dist_light_list = []
     fid_dict = {'test': '_TEST', 'train': 'TRAIN'}
 
     for subdir_id in tqdm(os.listdir(dir_id)):
         if subdir_id[-5:] == fid_dict[mode] and subdir_id[0] != ".":
             ref_mesh_fid = "cad_model/" + subdir_id.split('.')[0] + ".stl"
+            ref_mesh_ligh_fid = "cad_model/" + subdir_id.split('.')[0] + "_light.stl"
             ref_mesh = trimesh.load(ref_mesh_fid)
+            ref_mesh_light = trimesh.load_mesh(ref_mesh_ligh_fid)
             subdir_id = dir_id + subdir_id + "/"
 
 
@@ -36,15 +39,17 @@ def create_scan_dist(dir_id="scan_data/", mode='train'):
                     scan_mesh = trimesh.load(f_id)
                     _, dist = measure_distance(scan_mesh, ref_mesh)
                     master_scan_dist_list.append(dist)
+                    _, dist_light = measure_distance(scan_mesh, ref_mesh_light)
+                    master_scan_dist_light_list.append(dist_light)
                     master_ref_mesh_list.append(ref_mesh_fid)
 
-                    l_dist.append(dist)
+                    l_dist.append(dist_light)
                 ave_dist = np.array(l_dist).mean(axis=0)
                 for i in comb:
                     master_ave_dist_list.append(ave_dist)
                 # print(master_ave_dist_list.__len__(), (ave_dist - l_dist).std(axis=1))
 
-    return master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list
+    return master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list, master_scan_dist_light_list
 
 def process_mesh(args):
     fid, master_scan_dist_list = args
@@ -248,7 +253,7 @@ def compute_indices(ref_mesh, shape, step, SE, k_tree):
     # Return list of computed indices for all vertices in the chunk
     return all_scan_case_dist
 
-def create_conv_image_from_indices(indices, scan_dist, shape=15, show_p_bar=True):
+def create_conv_image_from_indices(indices, scan_dist,shape=15, show_p_bar=True):
     l_scan_case_dist = []
     scan_case_dist = np.ones((shape, shape))
     if show_p_bar:
@@ -307,25 +312,27 @@ if __name__ == '__main__':
 
     # === Train dataprep ===
     print("started train dataprep\n")
-    master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist(mode='train')
+    master_scan_dist_heavy_list, master_ave_dist_list, master_ref_mesh_list, master_scan_dist_list = create_scan_dist(mode='train')
 
-    with open('temp/master_scan_dist_list.pkl', 'wb') as f:
-        pickle.dump(master_scan_dist_list, f)
+    with open('temp/master_scan_dist_heavy_list.pkl', 'wb') as f:
+        pickle.dump(master_scan_dist_heavy_list, f)
     with open('temp/master_ave_dist_list.pkl', 'wb') as f:
         pickle.dump(master_ave_dist_list, f)
     with open('temp/master_ref_mesh_list.pkl', 'wb') as f:
         pickle.dump(master_ref_mesh_list, f)
+    with open('temp/master_scan_dist_list.pkl', 'wb') as f:
+        pickle.dump(master_scan_dist_list, f)
 
-
-    with open('temp/master_scan_dist_list.pkl', 'rb') as f:
-        master_scan_dist_list = pickle.load(f)
+    with open('temp/master_scan_dist_heavy_list.pkl', 'rb') as f:
+        master_scan_dist_heavy_list = pickle.load(f)
     with open('temp/master_ave_dist_list.pkl', 'rb') as f:
         master_ave_dist_list = pickle.load(f)
     with open('temp/master_ref_mesh_list.pkl', 'rb') as f:
         master_ref_mesh_list = pickle.load(f)
+    with open('temp/master_scan_dist_list.pkl', 'rb') as f:
+        master_scan_dist_list = pickle.load(f)
 
-
-    master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
+    master_conv = create_conv_data(master_scan_dist_heavy_list, master_ref_mesh_list)
     master_conv = torch.cat(master_conv)
     torch.save(master_conv, "data/master_conv_with_mean.trc")
     print('train dataprep done')
@@ -333,23 +340,26 @@ if __name__ == '__main__':
 
     # === Test dataprep ===
     print("Started test dataprep\n")
-    master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list = create_scan_dist(mode='test')
+    master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list, master_scan_dist_light_list = create_scan_dist(mode='test')
 
-    with open('temp/test_master_scan_dist_list.pkl', 'wb') as f:
+    with open('temp/test_master_scan_dist_list_heavy.pkl', 'wb') as f:
         pickle.dump(master_scan_dist_list, f)
     with open('temp/test_master_ave_dist_list.pkl', 'wb') as f:
         pickle.dump(master_ave_dist_list, f)
     with open('temp/test_master_ref_mesh_list.pkl', 'wb') as f:
         pickle.dump(master_ref_mesh_list, f)
+    with open('temp/test_master_scan_dist_list.pkl', 'wb') as f:
+        pickle.dump(master_scan_dist_light_list, f)
 
 
-    with open('temp/test_master_scan_dist_list.pkl', 'rb') as f:
+    with open('temp/test_master_scan_dist_list_heavy.pkl', 'rb') as f:
         master_scan_dist_list = pickle.load(f)
-    with open('temp/test_master_ref_mesh_list.pkl', 'rb') as f:
+    with open('temp/test_master_ave_dist_list.pkl', 'rb') as f:
         master_ave_dist_list = pickle.load(f)
     with open('temp/test_master_ref_mesh_list.pkl', 'rb') as f:
         master_ref_mesh_list = pickle.load(f)
-
+    with open('temp/test_master_scan_dist_list.pkl', 'rb') as f:
+        master_scan_dist_light_list = pickle.load(f)
 
     master_conv = create_conv_data(master_scan_dist_list, master_ref_mesh_list)
     master_conv = torch.cat(master_conv)
