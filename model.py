@@ -122,8 +122,8 @@ class homemade_cnn(Module):
         y = y * mask
 
         y = self.drop6(self.norm6(self.r6(self.p6(self.c6(y)))))
-        mask = self.mask_max_pool(mask)
-        y = y * mask
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
 
         # y = self.drop7(self.r7(self.c7(y)))
         # mask = self.mask_max_pool(mask)
