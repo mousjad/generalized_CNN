@@ -155,8 +155,8 @@ class homemade_cnn(Module):
             loss = loss_fn(pred, y_data)
             Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
-            l2 = pred - y_data
-            wandb.log({"Train loss": np.percentile(l2.cpu().detach().numpy(), 50), "epoch": epoch})
+            l2 = torch.nn.functional.mseloss(pred, y_data, reduction="none")
+            wandb.log({"Train median": torch.median(l2), "epoch": epoch})
 
             # Backpropagation
             loss.backward()
@@ -179,6 +179,8 @@ class homemade_cnn(Module):
             loss = loss_fn(pred, y_data)
             Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
+            l2 = torch.nn.functional.mseloss(pred, y_data, reduction="none")
+            wandb.log({"Test median": torch.median(l2), "epoch": epoch})
             wandb.log({"Test loss": loss.item(), "epoch": epoch})
 
         Loss = Loss / test
