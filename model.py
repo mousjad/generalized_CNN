@@ -336,7 +336,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    # hmc = torch.load("NN_model/distinctive-snowflake-255model.trc")
+    hmc = torch.load("NN_model/absurd-river-101model.trc")
     opt = AdamW(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
@@ -347,10 +347,10 @@ def train_generalized_CNN():
 
     pbar = tqdm(range(max_epoch), desc="test loss = " + str(test_loss) + " Train_loss = " + str(test_loss))
     for epoch in pbar:
-        hmc.train()
-        train_loss = hmc.train_loop(train_data, l_fn, opt, epoch)
-        wandb.log({"Mean train loss": train_loss, "epoch": epoch})
-        pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
+        # hmc.train()
+        # train_loss = hmc.train_loop(train_data, l_fn, opt, epoch)
+        # wandb.log({"Mean train loss": train_loss, "epoch": epoch})
+        # pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
 
         hmc.eval()
         test_loss = hmc.test_loop(test_data, l_fn, epoch)
