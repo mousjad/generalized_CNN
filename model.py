@@ -29,7 +29,7 @@ class homemade_cnn(Module):
         self.n_case = n_case
         self.batch_size = batch_size
         self.device = device
-        self.dropout_rate = 0
+        self.dropout_rate = 0.2
         self.mask_max_pool = MaxPool2d(3, stride=1)
         self.mask_max_pool5 = MaxPool2d(5, stride=1)
 
@@ -49,17 +49,17 @@ class homemade_cnn(Module):
         self.norm2 = BatchNorm2d(w2)
         self.drop2 = Dropout(self.dropout_rate)
 
-        self.c3 = Conv2d(w2, w3, (3, 3))
+        self.c3 = Conv2d(w2, w3, (5, 5))
         self.p3 = MaxPool2d(3, stride=1, padding=1)
         self.r3 = LeakyReLU()
         self.norm3 = BatchNorm2d(w3)
         self.drop3 = Dropout(self.dropout_rate)
 
-        self.c4 = Conv2d(w3, w4, (3, 3))
-        self.p4 = MaxPool2d(3, stride=1, padding=1)
-        self.r4 = LeakyReLU()
-        self.norm4 = BatchNorm2d(w4)
-        self.drop4 = Dropout(self.dropout_rate)
+        # self.c4 = Conv2d(w3, w4, (3, 3))
+        # self.p4 = MaxPool2d(3, stride=1, padding=1)
+        # self.r4 = LeakyReLU()
+        # self.norm4 = BatchNorm2d(w4)
+        # self.drop4 = Dropout(self.dropout_rate)
 
         # self.c5 = Conv2d(w4, w5, (3, 3))
         # self.p5 = MaxPool2d(3, stride=1, padding=1)
@@ -109,12 +109,12 @@ class homemade_cnn(Module):
         y = y * mask
 
         y = self.drop3(self.norm3(self.r3(self.c3(y))))
-        mask = self.mask_max_pool(mask)
+        mask = self.mask_max_pool2(mask)
         y = y * mask
 
-        y = self.drop4(self.norm4(self.r4(self.c4(y))))
-        mask = self.mask_max_pool(mask)
-        y = y * mask
+        # y = self.drop4(self.norm4(self.r4(self.c4(y))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
 
         # y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
         # mask = self.mask_max_pool(mask)
@@ -294,17 +294,17 @@ def train_generalized_CNN():
 
     hyperparameter_defaults = dict(
         batch_size=10000,
-        lr=1e-5,
+        lr=2e-5,
         epochs=2,
         w1=4,
         w2=8,
         w3=16,
         w4=32,
         w5=16,
-        w6=32,
-        w7=64,
-        w8=16,
-        w9=8,
+        w6=16,
+        w7=8,
+        w8=4,
+        w9=4,
         w10=2
     )
 
