@@ -169,7 +169,7 @@ class homemade_cnn(Module):
         return Loss
 
 
-    def test_loop(self, Data, loss_fn, epoch):
+    def test_loop(self, Data, loss_fn, epoch, log=True):
         Loss = 0
         test = 0
         for data in Data:
@@ -179,9 +179,10 @@ class homemade_cnn(Module):
             loss = loss_fn(pred, y_data)
             Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
-            l2 = torch.nn.functional.mse_loss(pred, y_data, reduction="none")
-            wandb.log({"Test median": torch.median(l2), "epoch": epoch})
-            wandb.log({"Test loss": loss.item(), "epoch": epoch})
+            if log:
+                l2 = torch.nn.functional.mse_loss(pred, y_data, reduction="none")
+                wandb.log({"Test median": torch.median(l2), "epoch": epoch})
+                wandb.log({"Test loss": loss.item(), "epoch": epoch})
 
         Loss = Loss / test
 
@@ -310,7 +311,7 @@ def train_generalized_CNN():
         w10=2
     )
 
-    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
+    wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
@@ -372,7 +373,7 @@ def train_generalized_CNN():
     torch.save(bestmodel, "NN_model/" + wandb.run.name + 'model.trc')
     print('saved best model with loss ' + str(best_test_loss) + ' at epoch +' + str(bestmodel_epoch))
 
-    val_train_loss = bestmodel.test_loop(train_data, l_fn, epoch)
+    val_train_loss = bestmodel.test_loop(train_data, l_fn, epoch, log=False)
     val_test_loss = bestmodel.test_loop(test_data, l_fn, epoch)
     print('best model training loss: ' + str(val_train_loss))
     print('best model test loss: ' + str(val_test_loss))
