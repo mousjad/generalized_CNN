@@ -158,7 +158,6 @@ class homemade_cnn(Module):
 
             # Backpropagation
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.parameters(), 1)
             optimizer.step()
             wandb.log({"Train loss": loss.item(), "epoch": epoch})
 
@@ -309,7 +308,7 @@ def train_generalized_CNN():
         w10=2
     )
 
-    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
+    wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
@@ -334,7 +333,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    # hmc = torch.load("NN_model/absurd-river-101model.trc")
+    hmc = torch.load("NN_model/good-pond-102model.trc")
     opt = AdamW(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
