@@ -92,29 +92,27 @@ class homemade_cnn(Module):
         self.Lin3 = Linear(w8, w9, bias=False)
         self.lr3 = ReLU()
         self.Lin4 = Linear(w9, w10, bias=False)
-        self.input2_drop = Dropout(0.5)
-        self.lin_input2 = Linear(1, 1)
         self.Lin5 = Linear(w10, 1, bias=False)
 
 
     def forward(self, input, input2, in_training=False):
-        # y = neighboorPadding(input[:, 0].reshape((-1, 1, 15, 15)), input[:, 1].reshape((-1, 1, 15, 15)), 3)
-        y = input[:, 0].reshape((-1, 1, 15, 15))
+        y = neighboorPadding(input[:, 0].reshape((-1, 1, 15, 15)), input[:, 1].reshape((-1, 1, 15, 15)), 3)
+        # y = input[:, 0].reshape((-1, 1, 15, 15))
         # y = data_transforms["train" if self.training else "val"](y)
 
-        y = self.drop1(self.norm1(self.r1(self.p1(self.c1(y)))))
+        y = self.drop1(self.norm1(self.r1(self.c1(y))))
         mask = self.mask_max_pool5(input[:, 1].reshape((-1, 1, 15, 15)))
         y = y * mask
 
-        y = self.drop2(self.norm2(self.r2(self.p2(self.c2(y)))))
+        y = self.drop2(self.norm2(self.r2(self.c2(y))))
         mask = self.mask_max_pool5(mask)
         y = y * mask
 
-        y = self.drop3(self.norm3(self.r3(self.p3(self.c3(y)))))
+        y = self.drop3(self.norm3(self.r3(self.c3(y))))
         mask = self.mask_max_pool(mask)
         y = y * mask
 
-        y = self.drop4(self.norm4(self.r4(self.p4(self.c4(y)))))
+        y = self.drop4(self.norm4(self.r4(self.c4(y))))
         mask = self.mask_max_pool(mask)
         y = y * mask
 
@@ -311,7 +309,7 @@ def train_generalized_CNN():
         w10=2
     )
 
-    wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
+    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
@@ -336,7 +334,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    hmc = torch.load("NN_model/absurd-river-101model.trc")
+    # hmc = torch.load("NN_model/absurd-river-101model.trc")
     opt = AdamW(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
@@ -347,10 +345,10 @@ def train_generalized_CNN():
 
     pbar = tqdm(range(max_epoch), desc="test loss = " + str(test_loss) + " Train_loss = " + str(test_loss))
     for epoch in pbar:
-        # hmc.train()
-        # train_loss = hmc.train_loop(train_data, l_fn, opt, epoch)
-        # wandb.log({"Mean train loss": train_loss, "epoch": epoch})
-        # pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
+        hmc.train()
+        train_loss = hmc.train_loop(train_data, l_fn, opt, epoch)
+        wandb.log({"Mean train loss": train_loss, "epoch": epoch})
+        pbar.set_description(desc="test loss = " + str(test_loss) + " Train_loss = " + str(train_loss))
 
         hmc.eval()
         test_loss = hmc.test_loop(test_data, l_fn, epoch)
