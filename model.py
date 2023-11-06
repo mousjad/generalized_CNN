@@ -292,6 +292,12 @@ def filter_data(mode):
 
 def train_generalized_CNN():
 
+    # === train data import ===
+    x_train, x2_train, y_train = filter_data("train")
+
+    # === Test data import ===
+    x_test, x2_test, y_test = filter_data("test")
+
     hyperparameter_defaults = dict(
         batch_size=10000,
         lr=2e-5,
@@ -318,12 +324,6 @@ def train_generalized_CNN():
 
     git_push(r"C:\Generalized_CNN\.git", f"{wandb.run.name}_automated_commit")
     l_fn = MSELoss(reduction='mean')
-
-    # === train data import ===
-    x_train, x2_train, y_train = filter_data("train")
-
-    # === Test data import ===
-    x_test, x2_test, y_test = filter_data("test")
 
 
     train_dataset = dataset(x_train, x2_train, y_train)
