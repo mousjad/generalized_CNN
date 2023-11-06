@@ -257,8 +257,8 @@ def filter_data(mode):
     x2_train = x2_train[torch.nonzero(filt)[:, 0]]
     y_train = y_train[torch.nonzero(filt)[:, 0]]
 
-    filt = torch.where(x_train != 0)
-    x_train[filt] = x_train[filt] + 0.5
+    # filt = torch.where(x_train != 0)
+    # x_train[filt] = x_train[filt] + 0.5
 
     filt = torch.where(x_train.sum(axis=(2, 3)) != 0)[0]
     x_train = x_train[filt]
