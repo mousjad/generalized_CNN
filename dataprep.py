@@ -238,33 +238,33 @@ if __name__ == '__main__':
     # with open('temp/master_scan_dist_list.pkl', 'wb') as f:
     #     pickle.dump(master_scan_dist_list, f)
 
-    # with open('temp/master_scan_dist_heavy_list.pkl', 'rb') as f:
-    #     master_scan_dist_heavy_list = pickle.load(f)
-    # with open('temp/master_ave_dist_list.pkl', 'rb') as f:
-    #     master_ave_dist_list = pickle.load(f)
-    # with open('temp/master_ref_mesh_list.pkl', 'rb') as f:
-    #     master_ref_mesh_list = pickle.load(f)
-    # with open('temp/master_scan_dist_list.pkl', 'rb') as f:
-    #     master_scan_dist_list = pickle.load(f)
-    #
-    # master_conv = create_conv_data(master_scan_dist_heavy_list, master_ref_mesh_list)
-    # master_conv = torch.cat(master_conv)
-    # torch.save(master_conv, "data/master_conv_with_mean.trc")
-    # print('train dataprep done')
+    with open('temp/master_scan_dist_heavy_list.pkl', 'rb') as f:
+        master_scan_dist_heavy_list = pickle.load(f)
+    with open('temp/master_ave_dist_list.pkl', 'rb') as f:
+        master_ave_dist_list = pickle.load(f)
+    with open('temp/master_ref_mesh_list.pkl', 'rb') as f:
+        master_ref_mesh_list = pickle.load(f)
+    with open('temp/master_scan_dist_list.pkl', 'rb') as f:
+        master_scan_dist_list = pickle.load(f)
+
+    master_conv = create_conv_data(master_scan_dist_heavy_list, master_ref_mesh_list)
+    master_conv = torch.cat(master_conv)
+    torch.save(master_conv, "data/master_conv_with_mean.trc")
+    print('train dataprep done')
 
 
     # === Test dataprep ===
     print("Started test dataprep\n")
-    master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list, master_scan_dist_light_list = create_scan_dist(mode='test')
-
-    with open('temp/test_master_scan_dist_list_heavy.pkl', 'wb') as f:
-        pickle.dump(master_scan_dist_list, f)
-    with open('temp/test_master_ave_dist_list.pkl', 'wb') as f:
-        pickle.dump(master_ave_dist_list, f)
-    with open('temp/test_master_ref_mesh_list.pkl', 'wb') as f:
-        pickle.dump(master_ref_mesh_list, f)
-    with open('temp/test_master_scan_dist_list.pkl', 'wb') as f:
-        pickle.dump(master_scan_dist_light_list, f)
+    # master_scan_dist_list, master_ave_dist_list, master_ref_mesh_list, master_scan_dist_light_list = create_scan_dist(mode='test')
+    #
+    # with open('temp/test_master_scan_dist_list_heavy.pkl', 'wb') as f:
+    #     pickle.dump(master_scan_dist_list, f)
+    # with open('temp/test_master_ave_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ave_dist_list, f)
+    # with open('temp/test_master_ref_mesh_list.pkl', 'wb') as f:
+    #     pickle.dump(master_ref_mesh_list, f)
+    # with open('temp/test_master_scan_dist_list.pkl', 'wb') as f:
+    #     pickle.dump(master_scan_dist_light_list, f)
 
 
     with open('temp/test_master_scan_dist_list_heavy.pkl', 'rb') as f:

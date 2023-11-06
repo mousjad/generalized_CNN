@@ -193,7 +193,7 @@ class dataset(torch.utils.data.IterableDataset):
         self.Y = Y
 
     def __iter__(self):
-        return zip(self.X, self.X2, self.Y)
+        return zip(self.X.float(), self.X2.float(), self.Y.float())
 
     def __len__(self):
         return len(self.X)
@@ -209,7 +209,7 @@ def filter_data(mode):
     dict_save = {"train": ["data/x_train.trc", "data/x2_train.trc", "data/y_train.trc"],
                  "test": ["data/x_test.trc", "data/x2_test.trc", "data/y_test.trc"]}
 
-    l_scan_case_dist = torch.load(dict_conv[mode]).type(torch.float)
+    l_scan_case_dist = torch.load(dict_conv[mode])
 
     with open(dict_ave[mode], 'rb') as f:
         ave_dist = pickle.load(f)
@@ -219,7 +219,7 @@ def filter_data(mode):
         else:
             temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
     ave_dist = temp
-    ave_dist = torch.from_numpy(np.array(ave_dist)).type(torch.float)
+    ave_dist = torch.from_numpy(np.array(ave_dist))
 
     with open(dict_dist[mode], 'rb') as f:
         center_dist = pickle.load(f)
@@ -229,7 +229,7 @@ def filter_data(mode):
         else:
             temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
     center_dist = temp
-    center_dist = torch.from_numpy(np.array(center_dist)).type(torch.float)
+    center_dist = torch.from_numpy(np.array(center_dist))
 
     ind = torch.where(center_dist != 0)[0]
     x_train = l_scan_case_dist[ind]
