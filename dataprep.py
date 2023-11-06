@@ -105,7 +105,7 @@ def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
             p_fid = 'cad_indices/' + master_ref_mesh_list[i].split('/')[1].split('.')[0] + '.pkl'
             with open(p_fid, 'rb') as f:
                 p = pickle.load(f)
-            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 15, False).half()
+            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 10, False).half()
             torch.save(conv, f"cad_conv/{hsh}.pkl")
         master_conv.append(conv)
 
