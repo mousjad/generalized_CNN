@@ -19,8 +19,8 @@ cudnn.benchmark = True
 data_transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
-    transforms.RandomResizedCrop(size=(10, 10)),
-    transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
+    # transforms.RandomResizedCrop(size=(10, 10)),
+    # transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
 ])
 
 
