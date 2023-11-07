@@ -12,13 +12,15 @@ import numpy as np
 import copy
 import pickle
 from neighboor_padding import neighboorPadding
-from torchvision import datasets, models, transforms
+from torchvision import transforms
 from  utils import git_push
 
 cudnn.benchmark = True
 data_transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip()
+    transforms.RandomVerticalFlip(),
+    transforms.RandomResizedCrop(size=(10, 10)),
+    transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
 ])
 
 
@@ -236,7 +238,7 @@ def filter_data(mode):
     x2_train = center_dist[ind]
     y_train = ave_dist[ind]
 
-    x_train = x_train.reshape((-1, 1, 10, 10))
+    x_train = x_train.reshape((-1, 2, 10, 10))
     sum = x_train.sum(axis=(2, 3))
     train_filt_max = np.percentile(sum, 99)
     train_filt_min = np.percentile(sum, 1)
@@ -257,9 +259,6 @@ def filter_data(mode):
     x2_train = x2_train[torch.nonzero(filt)[:, 0]]
     y_train = y_train[torch.nonzero(filt)[:, 0]]
 
-    # filt = torch.where(x_train != 0)
-    # x_train[filt] = x_train[filt] + 0.5
-
     filt = torch.where(x_train.sum(axis=(2, 3)) != 0)[0]
     x_train = x_train[filt]
     x2_train = x2_train[filt]
@@ -270,9 +269,6 @@ def filter_data(mode):
     x2_train = x2_train[idx]
     y_train = y_train[idx]
 
-    x_train_mask = (x_train != 0).half()
-    x_train = torch.cat((x_train.reshape((-1, 1, 10, 10)), x_train_mask.reshape((-1, 1, 10, 10))), dim=1)
-
     torch.save(x_train, dict_save[mode][0])
     torch.save(x2_train, dict_save[mode][1])
     torch.save(y_train, dict_save[mode][2])
@@ -280,11 +276,6 @@ def filter_data(mode):
     x_train = torch.load(dict_save[mode][0])
     x2_train = torch.load(dict_save[mode][1])
     y_train = torch.load(dict_save[mode][2])
-
-    # filt = torch.where(x_train[:, 1].sum(axis=(1, 2)) >= 10)[0]
-    # x_train = x_train[filt]
-    # x2_train = x2_train[filt]
-    # y_train = y_train[filt]
 
     return x_train, x2_train, y_train
 
