@@ -51,11 +51,11 @@ class homemade_cnn(Module):
         self.norm2 = BatchNorm2d(w2)
         self.drop2 = Dropout(self.dropout_rate)
 
-        # self.c3 = Conv2d(w2, w3, (5, 5))
-        # self.p3 = MaxPool2d(3, stride=1, padding=1)
-        # self.r3 = LeakyReLU()
-        # self.norm3 = BatchNorm2d(w3)
-        # self.drop3 = Dropout(self.dropout_rate)
+        self.c3 = Conv2d(w2, w3, (5, 5))
+        self.p3 = MaxPool2d(3, stride=1, padding=1)
+        self.r3 = LeakyReLU()
+        self.norm3 = BatchNorm2d(w3)
+        self.drop3 = Dropout(self.dropout_rate)
 
         # self.c4 = Conv2d(w3, w4, (3, 3))
         # self.p4 = MaxPool2d(3, stride=1, padding=1)
