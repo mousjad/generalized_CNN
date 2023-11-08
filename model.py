@@ -289,8 +289,8 @@ def train_generalized_CNN():
     x_test, x2_test, y_test = filter_data("test")
 
     hyperparameter_defaults = dict(
-        batch_size=100000,
-        lr=2e-4,
+        batch_size=10000,
+        lr=5e-5,
         epochs=2,
         w1=8,
         w2=16,
