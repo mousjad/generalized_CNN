@@ -313,7 +313,7 @@ def train_generalized_CNN():
     train_dataset = dataset(x_train, x2_train, y_train)
     test_dataset = dataset(x_test, x2_test, y_test)
 
-    train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    train_data = DataLoader(train_dataset, batch_size=batch_size, num_workers=8)
     test_data = DataLoader(test_dataset, batch_size=batch_size, num_workers=8)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
