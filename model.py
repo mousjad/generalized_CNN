@@ -239,15 +239,15 @@ def filter_data(mode):
     # y_train = ave_dist[ind]
     #
     # x_train = x_train.reshape((-1, 2, 10, 10))
-    # sum = x_train.sum(axis=(2, 3))
+    # sum = x_train.sum(axis=(2, 3))[:, 0]
     # train_filt_max = np.percentile(sum, 99)
     # train_filt_min = np.percentile(sum, 1)
     # filt1 = (sum <= train_filt_max)
     # filt2 = (sum >= train_filt_min)
     # filt = (filt1) & (filt2)
-    # x_train = x_train[torch.nonzero(filt[:, 0])[:, 0]]
-    # x2_train = x2_train[torch.nonzero(filt[:, 0])[:, 0]]
-    # y_train = y_train[torch.nonzero(filt[:, 0])[:, 0]]
+    # x_train = x_train[torch.nonzero(filt)][:, 0]
+    # x2_train = x2_train[torch.nonzero(filt)][:, 0]
+    # y_train = y_train[torch.nonzero(filt)][:, 0]
     #
     # diff = x2_train - y_train
     # train_filt_max = np.percentile(diff, 99)
@@ -259,7 +259,7 @@ def filter_data(mode):
     # x2_train = x2_train[torch.nonzero(filt)[:, 0]]
     # y_train = y_train[torch.nonzero(filt)[:, 0]]
     #
-    # filt = torch.where(x_train.sum(axis=(2, 3)) != 0)[0]
+    # filt = torch.where(x_train[:, 0, :, :].sum(axis=(1,2)) != 0)[0]
     # x_train = x_train[filt]
     # x2_train = x2_train[filt]
     # y_train = y_train[filt]
