@@ -304,7 +304,7 @@ def train_generalized_CNN():
         w10=4
     )
 
-    wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
+    wandb.init(project='generalized CNN', mode='offline', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
@@ -314,7 +314,6 @@ def train_generalized_CNN():
 
     git_push(r"C:\Generalized_CNN\.git", f"{wandb.run.name}_automated_commit")
     l_fn = MSELoss(reduction='mean')
-
 
     train_dataset = dataset(x_train, x2_train, y_train)
     test_dataset = dataset(x_test, x2_test, y_test)
