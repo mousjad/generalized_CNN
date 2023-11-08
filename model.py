@@ -292,7 +292,7 @@ def train_generalized_CNN():
 
     hyperparameter_defaults = dict(
         batch_size=10000,
-        lr=5e-5,
+        lr=2e-5,
         epochs=2,
         w1=8,
         w2=16,
