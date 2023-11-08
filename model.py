@@ -19,8 +19,8 @@ cudnn.benchmark = True
 data_transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
-    # transforms.RandomResizedCrop(size=(10, 10)),
-    # transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
+    transforms.RandomResizedCrop(size=(10, 10)),
+    transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
 ])
 
 
@@ -264,11 +264,6 @@ def filter_data(mode):
     # x2_train = x2_train[filt]
     # y_train = y_train[filt]
     #
-    # idx = torch.randperm(x_train.size(0))
-    # x_train = x_train[idx]
-    # x2_train = x2_train[idx]
-    # y_train = y_train[idx]
-    #
     # torch.save(x_train, dict_save[mode][0])
     # torch.save(x2_train, dict_save[mode][1])
     # torch.save(y_train, dict_save[mode][2])
@@ -318,8 +313,8 @@ def train_generalized_CNN():
     train_dataset = dataset(x_train, x2_train, y_train)
     test_dataset = dataset(x_test, x2_test, y_test)
 
-    train_data = DataLoader(train_dataset, batch_size=batch_size)
-    test_data = DataLoader(test_dataset, batch_size=batch_size)
+    train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8)
+    test_data = DataLoader(test_dataset, batch_size=batch_size, num_workers=8)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
     # hmc = torch.load("NN_model/good-pond-102model.trc")

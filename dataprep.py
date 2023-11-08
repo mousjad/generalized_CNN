@@ -192,7 +192,7 @@ def create_conv_image_from_indices(indices, scan_dist,shape=15, show_p_bar=True)
                     scan_case_dist[0, i % shape, i // shape] = 0
                     scan_case_dist[1, i % shape, i // shape] = 0
                 else:
-                    scan_case_dist[0, i % shape, i // shape] = scan_dist[p].mean()
+                    scan_case_dist[0, i % shape, i // shape] = scan_dist[p].mean() + 0.5
                     scan_case_dist[1, i % shape, i // shape] = 1
             l_scan_case_dist.append(scan_case_dist.copy())
     return torch.tensor(np.array(l_scan_case_dist))
