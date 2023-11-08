@@ -19,8 +19,8 @@ cudnn.benchmark = True
 data_transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
-    # transforms.RandomResizedCrop(size=(10, 10)),
-    # transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
+    transforms.RandomResizedCrop(size=(10, 10)),
+    transforms.GaussianBlur(kernel_size=(3, 3), sigma=0.01)
 ])
 
 
@@ -31,7 +31,7 @@ class homemade_cnn(Module):
         self.n_case = n_case
         self.batch_size = batch_size
         self.device = device
-        self.dropout_rate = 0.2
+        self.dropout_rate = 0.5
         self.mask_max_pool = MaxPool2d(3, stride=1)
         self.mask_max_pool5 = MaxPool2d(5, stride=1)
 
@@ -153,7 +153,8 @@ class homemade_cnn(Module):
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
             pred = self.forward(data_transforms(x_data), x2_data)
             loss = loss_fn(pred, y_data)
-            Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
+            Loss += loss.item() * x_data.shape[0]
+            # Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
             l2 = torch.nn.functional.mse_loss(pred, y_data, reduction="none")
             wandb.log({"Train median": torch.median(l2), "epoch": epoch})
@@ -176,7 +177,8 @@ class homemade_cnn(Module):
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
             pred = self.forward(x_data, x2_data)
             loss = loss_fn(pred, y_data)
-            Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
+            Loss += loss.item() * x_data.shape[0]
+            # Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
             test += x_data.shape[0]
             if log:
                 l2 = torch.nn.functional.mse_loss(pred, y_data, reduction="none")
@@ -308,7 +310,7 @@ def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
-    max_epoch = 30
+    max_epoch = 100
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
 
