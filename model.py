@@ -195,7 +195,7 @@ class dataset(torch.utils.data.IterableDataset):
         self.Y = Y
 
     def __iter__(self):
-        return zip(self.X.float(), self.X2.float(), self.Y.float())
+        return zip(self.X, self.X2, self.Y)
 
     def __len__(self):
         return len(self.X)
@@ -273,9 +273,9 @@ def filter_data(mode):
     # torch.save(x2_train, dict_save[mode][1])
     # torch.save(y_train, dict_save[mode][2])
 
-    x_train = torch.load(dict_save[mode][0])
-    x2_train = torch.load(dict_save[mode][1])
-    y_train = torch.load(dict_save[mode][2])
+    x_train = torch.load(dict_save[mode][0]).float()
+    x2_train = torch.load(dict_save[mode][1]).float()
+    y_train = torch.load(dict_save[mode][2]).float()
 
     return x_train, x2_train, y_train
 

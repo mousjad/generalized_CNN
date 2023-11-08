@@ -37,7 +37,7 @@ def create_scan_dist(dir_id="scan_data/", mode='train'):
 
 
             l_dir = os.listdir(subdir_id)
-            combs = list(combinations(l_dir, 4))
+            combs = list(combinations(l_dir, 5))
             for comb in tqdm(combs, leave=False, total=len(combs)):
                 l_dist = []
                 for f_id in tqdm(comb, leave=False):
