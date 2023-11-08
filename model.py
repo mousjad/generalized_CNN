@@ -31,7 +31,7 @@ class homemade_cnn(Module):
         self.n_case = n_case
         self.batch_size = batch_size
         self.device = device
-        self.dropout_rate = 0.5
+        self.dropout_rate = 0.0
         self.mask_max_pool = MaxPool2d(3, stride=1)
         self.mask_max_pool5 = MaxPool2d(5, stride=1)
 
