@@ -306,7 +306,7 @@ def train_generalized_CNN():
     test_data = DataLoader(test_dataset, batch_size=batch_size)
 
     hmc = homemade_cnn(batch_size=batch_size, device=device).to(device)
-    hmc = torch.load("NN_model/peachy-snowball-133model.trc")
+    # hmc = torch.load("NN_model/peachy-snowball-133model.trc")
     opt = Adam(hmc.parameters(), lr=lr)
     lambda1 = lambda epoch: 0.99 ** epoch
     scheduler = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda=lambda1)
