@@ -78,7 +78,7 @@ class homemade_cnn(Module):
         # y = y * mask
         # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
         # y = self.Lin1(y)
-        # y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
+        y = torch.cat((y, input2[:, None]), 1)
         y = self.lr1(self.Lin1(torch.flatten(y, start_dim=1)))
         y = self.lr2(self.Lin2(y))
         y = self.lr3(self.Lin3(y))
