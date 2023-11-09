@@ -37,12 +37,12 @@ class homemade_cnn(Module):
         w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
-        self.c1 = Conv2d(1, w1, (5, 5))
+        self.c1 = Conv2d(1, w1, (3, 3))
         self.p1 = MaxPool2d(3, stride=1, padding=1)
         self.r1 = LeakyReLU()
         self.norm1 = BatchNorm2d(w1)
         self.drop1 = Dropout(self.dropout_rate)
-        self.c2 = Conv2d(w1, w2, (5, 5))
+        self.c2 = Conv2d(w1, w2, (3, 3))
         self.p2 = MaxPool2d(3, stride=1, padding=1)
         self.r2 = LeakyReLU()
         self.norm2 = BatchNorm2d(w2)
@@ -78,7 +78,7 @@ class homemade_cnn(Module):
         # self.r8 = ReLU()
         # self.norm8 = BatchNorm2d(8)
         # self.drop8 = Dropout(self.dropout_rate)
-        self.Lin1 = Linear(3 * 3 * w6, w7, bias=False)
+        self.Lin1 = Linear(2 * 2 * w6, w7, bias=False)
         self.lr1 = ReLU()
         self.Lin2 = Linear(w7, w8, bias=False)
         self.lr2 = ReLU()
