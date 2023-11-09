@@ -92,17 +92,21 @@ class homemade_cnn(Module):
         # y = input[:, 0].reshape((-1, 1, 15, 15))
         # y = data_transforms["train" if self.training else "val"](y)
         y = self.drop1(self.norm1(self.r1(self.c1(y))))
-        mask = self.mask_max_pool5(input[:, 1].reshape((-1, 1, 10, 10)))
+        mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 10, 10)))
         y = y * mask
+
         y = self.drop2(self.norm2(self.r2(self.c2(y))))
-        mask = self.mask_max_pool5(mask)
+        mask = self.mask_max_pool(mask)
         y = y * mask
+
         y = self.drop3(self.norm3(self.r3(self.c3(y))))
         mask = self.mask_max_pool(mask)
         y = y * mask
+
         y = self.drop4(self.norm4(self.r4(self.c4(y))))
         mask = self.mask_max_pool(mask)
         y = y * mask
+
         # y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
         # mask = self.mask_max_pool(mask)
         # y = y * mask
