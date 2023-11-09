@@ -48,7 +48,7 @@ class homemade_cnn(Module):
 
     def forward(self, input, input2, in_training=False):
         # y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 3)
-        y = input[:, 0].reshape((-1, 1, 15, 15))
+        y = input[:, 0].reshape((-1, 1, 10, 10))
         # y = data_transforms["train" if self.training else "val"](y)
         # y = self.drop1(self.norm1(self.r1(self.c1(y))))
         # mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 10, 10)))
