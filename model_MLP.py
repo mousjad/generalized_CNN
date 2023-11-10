@@ -31,9 +31,10 @@ class homemade_cnn(Module):
         self.n_case = n_case
         self.batch_size = batch_size
         self.device = device
-        self.dropout_rate = 0
+        self.dropout_rate = 0.5
         self.mask_max_pool = MaxPool2d(3, stride=1)
         self.mask_max_pool5 = MaxPool2d(5, stride=1)
+        self.drop = Dropout(self.dropout_rate)
         # w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
@@ -79,10 +80,10 @@ class homemade_cnn(Module):
         # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
         # y = self.Lin1(y)
         y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
-        y = self.lr1(self.Lin1(torch.flatten(y, start_dim=1)))
-        y = self.lr2(self.Lin2(y))
-        y = self.lr3(self.Lin3(y))
-        y = self.Lin4(y)
+        y = self.drop(self.self.self.lr1(self.Lin1(torch.flatten(y, start_dim=1))))
+        y = self.drop(self.lr2(self.Lin2(y)))
+        y = self.drop(self.lr3(self.Lin3(y)))
+        y = self.drop(self.Lin4(y))
         # y2 = torch.flatten(self.input2_drop(self.lin_input2(input2.reshape((-1, 1)))))
         y = torch.flatten(self.Lin5(y))
         # y = (y + y2) / (1 + torch.where(y2 != 0, 1, 0))
@@ -97,6 +98,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
+            y_data = y_data + (0.01 *torch.rand(10000)-0.005).numpy()
             pred = self.forward(data_transforms(x_data), x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
