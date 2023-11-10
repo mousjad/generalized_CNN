@@ -31,7 +31,7 @@ class homemade_cnn(Module):
         self.n_case = n_case
         self.batch_size = batch_size
         self.device = device
-        self.dropout_rate = 0.5
+        self.dropout_rate = 0.25
         self.mask_max_pool = MaxPool2d(3, stride=1)
         self.mask_max_pool5 = MaxPool2d(5, stride=1)
         self.drop = Dropout(self.dropout_rate)
@@ -98,7 +98,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            y_data = y_data + (0.01 * torch.rand(y_data.shape[0]).to(self.device)-0.005)
+            y_data = y_data + (0.005 * torch.rand(y_data.shape[0]).to(self.device)-0.0025)
             pred = self.forward(data_transforms(x_data), x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
@@ -258,7 +258,7 @@ def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
-    max_epoch = 100
+    max_epoch = 25
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
 
