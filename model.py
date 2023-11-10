@@ -302,7 +302,7 @@ def train_generalized_CNN():
         wandb.run.name = 'offline_test'
 
     git_push(r"C:\Generalized_CNN\.git", f"{wandb.run.name}_automated_commit")
-    l_fn = MSELoss(reduction='mean')
+    l_fn = L1Loss(reduction='mean')
 
     train_dataset = dataset(x_train, x2_train, y_train)
     test_dataset = dataset(x_test, x2_test, y_test)
