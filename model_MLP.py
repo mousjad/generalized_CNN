@@ -48,45 +48,15 @@ class homemade_cnn(Module):
         self.Lin5 = Linear(w10, 1, bias=False)
 
     def forward(self, input, input2, in_training=False):
-        # y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 3)
-        y = input[:, 0].reshape((-1, 1, 10, 10))
-        # y = data_transforms["train" if self.training else "val"](y)
-        # y = self.drop1(self.norm1(self.r1(self.c1(y))))
-        # mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 10, 10)))
-        # y = y * mask
-        #
-        # y = self.drop2(self.norm2(self.r2(self.c2(y))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop3(self.norm3(self.r3(self.c3(y))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop4(self.norm4(self.r4(self.c4(y))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
 
-        # y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop6(self.norm6(self.r6(self.p6(self.c6(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        # y = self.drop7(self.r7(self.c7(y)))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
-        # y = self.Lin1(y)
+        y = input[:, 0].reshape((-1, 1, 10, 10))
+
         y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
         y = self.drop(self.lr1(self.Lin1(torch.flatten(y, start_dim=1))))
         y = self.drop(self.lr2(self.Lin2(y)))
         y = self.drop(self.lr3(self.Lin3(y)))
         y = self.drop(self.Lin4(y))
-        # y2 = torch.flatten(self.input2_drop(self.lin_input2(input2.reshape((-1, 1)))))
         y = torch.flatten(self.Lin5(y))
-        # y = (y + y2) / (1 + torch.where(y2 != 0, 1, 0))
         return y
 
 
@@ -248,9 +218,9 @@ def train_generalized_CNN():
         w4=32,#
         w5=16,#
         w6=10*10 + 1,
-        w7=64,
-        w8=32,
-        w9=16,
+        w7=128,
+        w8=64,
+        w9=32,
         w10=8
     )
 
