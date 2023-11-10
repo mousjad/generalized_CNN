@@ -68,7 +68,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            x2_data = x2_data + (0.005 * torch.randn(x2_data.shape[0]).to(self.device)-0.0025)
+            x2_data = x2_data + (0.01 * torch.randn(x2_data.shape[0]).to(self.device)-0.005)
             pred = self.forward(x_data, x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
@@ -228,7 +228,7 @@ def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
-    max_epoch = 25
+    max_epoch = 100
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
 
