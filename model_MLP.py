@@ -80,7 +80,7 @@ class homemade_cnn(Module):
         # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
         # y = self.Lin1(y)
         y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
-        y = self.drop(self.self.self.lr1(self.Lin1(torch.flatten(y, start_dim=1))))
+        y = self.drop(self.lr1(self.Lin1(torch.flatten(y, start_dim=1))))
         y = self.drop(self.lr2(self.Lin2(y)))
         y = self.drop(self.lr3(self.Lin3(y)))
         y = self.drop(self.Lin4(y))
