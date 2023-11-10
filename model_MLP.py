@@ -228,7 +228,7 @@ def train_generalized_CNN():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
-    max_epoch = 25
+    max_epoch = 200
     if wandb.run.name is None:
         wandb.run.name = 'offline_test'
 
