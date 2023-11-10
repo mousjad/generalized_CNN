@@ -98,7 +98,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            y_data = y_data + (0.01 *torch.rand(10000)-0.005).numpy()
+            y_data = y_data + (0.01 * torch.rand(y_data.shape[0])-0.005).numpy()
             pred = self.forward(data_transforms(x_data), x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
