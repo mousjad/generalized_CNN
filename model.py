@@ -82,7 +82,7 @@ class homemade_cnn(Module):
         # self.norm8 = BatchNorm2d(8)
         # self.drop8 = Dropout(self.dropout_rate)
         self.Lin1 = Linear(w2, w2)
-        # self.lr1 = ReLU()
+        self.lr1 = ReLU()
         # self.Lin2 = Linear(w7, w8, bias=False)
         # self.lr2 = ReLU()
         # self.Lin3 = Linear(w8, w9, bias=False)
