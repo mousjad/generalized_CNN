@@ -267,8 +267,8 @@ def filter_data(mode):
     x2_train = x2_train[idx]
     y_train = y_train[idx]
 
-    y_train = 2 * (y_train - y_train.mean()) / (y_train.max() - y_train.min())
-    x_train[:, 0] = 2 * (x_train[:, 0] - x_train[:, 0].mean()) / (x_train[:, 0].max() - x_train[:, 0].min())
+    y_train = 2 * (y_train - y_train.float().mean()) / (y_train.max() - y_train.min())
+    x_train[:, 0] = 2 * (x_train[:, 0] - x_train[:, 0].float().mean()) / (x_train[:, 0].max() - x_train[:, 0].min())
 
     torch.save(x_train, dict_save[mode][0])
     torch.save(x2_train, dict_save[mode][1])
