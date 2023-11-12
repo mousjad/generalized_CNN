@@ -134,7 +134,7 @@ class homemade_cnn(Module):
         y = input[:, 0].reshape((-1, 1, 10, 10))
         y = self.p1(self.r1(self.c1(y)))
         y = self.p2(self.r2(self.c2(y)))
-        y = self.lr1(self.lin1(y))
+        y = self.lr1(self.Lin1(y))
         y = self.Lin5(y)
         return y
 
