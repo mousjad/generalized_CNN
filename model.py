@@ -37,26 +37,29 @@ class homemade_cnn(Module):
         w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
+
         self.c1 = Conv2d(1, w1, (3, 3))
-        self.p1 = MaxPool2d(3, stride=1, padding=1)
-        self.r1 = LeakyReLU()
+        self.p1 = MaxPool2d(2)
+        self.r1 = ReLU()
         self.norm1 = BatchNorm2d(w1)
         self.drop1 = Dropout(self.dropout_rate)
+
         self.c2 = Conv2d(w1, w2, (3, 3))
-        self.p2 = MaxPool2d(3, stride=1, padding=1)
-        self.r2 = LeakyReLU()
+        self.p2 = MaxPool2d(2)
+        self.r2 = ReLU()
         self.norm2 = BatchNorm2d(w2)
         self.drop2 = Dropout(self.dropout_rate)
-        self.c3 = Conv2d(w2, w3, (3, 3))
-        self.p3 = MaxPool2d(3, stride=1, padding=1)
-        self.r3 = LeakyReLU()
-        self.norm3 = BatchNorm2d(w3)
-        self.drop3 = Dropout(self.dropout_rate)
-        self.c4 = Conv2d(w3, w4, (3, 3))
-        self.p4 = MaxPool2d(3, stride=1, padding=1)
-        self.r4 = LeakyReLU()
-        self.norm4 = BatchNorm2d(w4)
-        self.drop4 = Dropout(self.dropout_rate)
+
+        # self.c3 = Conv2d(w2, w3, (3, 3))
+        # self.p3 = MaxPool2d(3, stride=1, padding=1)
+        # self.r3 = LeakyReLU()
+        # self.norm3 = BatchNorm2d(w3)
+        # self.drop3 = Dropout(self.dropout_rate)
+        # self.c4 = Conv2d(w3, w4, (3, 3))
+        # self.p4 = MaxPool2d(3, stride=1, padding=1)
+        # self.r4 = LeakyReLU()
+        # self.norm4 = BatchNorm2d(w4)
+        # self.drop4 = Dropout(self.dropout_rate)
         # self.c5 = Conv2d(w4, w5, (3, 3))
         # self.p5 = MaxPool2d(3, stride=1, padding=1)
         # self.r5 = ReLU()
@@ -78,35 +81,35 @@ class homemade_cnn(Module):
         # self.r8 = ReLU()
         # self.norm8 = BatchNorm2d(8)
         # self.drop8 = Dropout(self.dropout_rate)
-        self.Lin1 = Linear(2 * 2 * w6, w7, bias=False)
-        self.lr1 = ReLU()
-        self.Lin2 = Linear(w7, w8, bias=False)
-        self.lr2 = ReLU()
-        self.Lin3 = Linear(w8, w9, bias=False)
-        self.lr3 = ReLU()
-        self.Lin4 = Linear(w9, w10, bias=False)
-        self.Lin5 = Linear(w10, 1, bias=False)
+        self.Lin1 = Linear(w2, w2)
+        # self.lr1 = ReLU()
+        # self.Lin2 = Linear(w7, w8, bias=False)
+        # self.lr2 = ReLU()
+        # self.Lin3 = Linear(w8, w9, bias=False)
+        # self.lr3 = ReLU()
+        # self.Lin4 = Linear(w9, w10, bias=False)
+        self.Lin5 = Linear(w2, 1)
 
     def forward(self, input, input2, in_training=False):
-        y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 3)
-        # y = input[:, 0].reshape((-1, 1, 15, 15))
+        # y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 3)
+
         # y = data_transforms["train" if self.training else "val"](y)
-        y = self.drop1(self.norm1(self.r1(self.c1(y))))
-        mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 10, 10)))
-        y = y * mask
-
-        y = self.drop2(self.norm2(self.r2(self.c2(y))))
-        mask = self.mask_max_pool(mask)
-        y = y * mask
-
-        y = self.drop3(self.norm3(self.r3(self.c3(y))))
-        mask = self.mask_max_pool(mask)
-        y = y * mask
-
-        y = self.drop4(self.norm4(self.r4(self.c4(y))))
-        mask = self.mask_max_pool(mask)
-        y = y * mask
-
+        # y = self.drop1(self.norm1(self.r1(self.c1(y))))
+        # mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 10, 10)))
+        # y = y * mask
+        #
+        # y = self.drop2(self.norm2(self.r2(self.c2(y))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+        #
+        # y = self.drop3(self.norm3(self.r3(self.c3(y))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+        #
+        # y = self.drop4(self.norm4(self.r4(self.c4(y))))
+        # mask = self.mask_max_pool(mask)
+        # y = y * mask
+        #
         # y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
         # mask = self.mask_max_pool(mask)
         # y = y * mask
@@ -120,13 +123,19 @@ class homemade_cnn(Module):
         # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
         # y = self.Lin1(y)
         # y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
-        y = self.lr1(self.Lin1(torch.flatten(y, start_dim=1)))
-        y = self.lr2(self.Lin2(y))
-        y = self.lr3(self.Lin3(y))
-        y = self.Lin4(y)
+        # y = self.lr1(self.Lin1(torch.flatten(y, start_dim=1)))
+        # y = self.lr2(self.Lin2(y))
+        # y = self.lr3(self.Lin3(y))
+        # y = self.Lin4(y)
         # y2 = torch.flatten(self.input2_drop(self.lin_input2(input2.reshape((-1, 1)))))
-        y = torch.flatten(self.Lin5(y))
+        # y = torch.flatten(self.Lin5(y))
         # y = (y + y2) / (1 + torch.where(y2 != 0, 1, 0))
+
+        y = input[:, 0].reshape((-1, 1, 15, 15))
+        y = self.p1(self.r1(self.c1(y)))
+        y = self.p2(self.r2(self.c2(y)))
+        y = self.lr1(self.lin1(y))
+        y = self.Lin5(y)
         return y
 
 
@@ -281,16 +290,16 @@ def train_generalized_CNN():
         batch_size=10000,
         lr=2e-5,
         epochs=2,
-        w1=8,
-        w2=16,
+        w1=32,
+        w2=64,
         w3=32,#
         w4=32,#
         w5=16,#
         w6=32,#
-        w7=32,
-        w8=16,
-        w9=8,
-        w10=4
+        w7=32,#
+        w8=16,#
+        w9=8,#
+        w10=4,#
     )
 
     wandb.init(project='generalized CNN', mode='online', config=hyperparameter_defaults)
