@@ -56,7 +56,7 @@ class homemade_cnn(Module):
         y = self.drop(self.lr2(self.Lin2(y)))
         y = self.drop(self.lr3(self.Lin3(y)))
         y = self.drop(self.Lin4(y))
-        y = torch.flatten(self.Lin5(y).reshape(-1) + input2.reshape(-1)).shape
+        y = torch.flatten(self.Lin5(y).reshape(-1) + input2.reshape(-1))
         return y
 
 
