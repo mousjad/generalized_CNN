@@ -51,7 +51,7 @@ class homemade_cnn(Module):
 
         y = input[:, 0].reshape((-1, 1, 10, 10))
 
-        y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
+        # y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
         y = self.drop(self.lr1(self.Lin1(torch.flatten(y, start_dim=1))))
         y = self.drop(self.lr2(self.Lin2(y)))
         y = self.drop(self.lr3(self.Lin3(y)))
@@ -217,11 +217,11 @@ def train_generalized_CNN():
         w3=32,#
         w4=32,#
         w5=16,#
-        w6=10*10 + 1,
-        w7=128,
-        w8=64,
-        w9=32,
-        w10=8
+        w6=10*10,
+        w7=512,
+        w8=512,
+        w9=64,
+        w10=16
     )
 
     wandb.init(project='MLP on image', mode='online', config=hyperparameter_defaults)
