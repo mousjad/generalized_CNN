@@ -39,7 +39,7 @@ class homemade_cnn(Module):
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
         self.Lin1 = Linear(w1, w2, bias=True)
-        self.relu = ReLU()
+        self.relu = LeakyReLU()
         self.Lin2 = Linear(w2, w3, bias=True)
         self.Lin3 = Linear(w3, w4, bias=True)
         self.Lin4 = Linear(w4, w5, bias=True)
