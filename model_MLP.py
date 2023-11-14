@@ -47,8 +47,8 @@ class homemade_cnn(Module):
         self.Lin6 = Linear(w6, 1, bias=True)
 
     def forward(self, input, input2, in_training=False):
-
-        y = input[:, 0].reshape((-1, 1, 10, 10))
+        y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 10)
+        # y = input[:, 0].reshape((-1, 1, 10, 10))
 
         # y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
         y = self.relu(self.Lin1(torch.flatten(y, start_dim=1)))
@@ -122,14 +122,14 @@ class dataset(torch.utils.data.IterableDataset):
 
 def filter_data(mode):
 
-    dict_conv = {"train": "data/master_conv_with_mean.trc", "test": "data/test_master_conv_with_mean.trc"}
+    dict_conv = {"train": "data/master_conv_with_mean_10.trc", "test": "data/test_master_conv_with_mean_10.trc"}
 
-    dict_ave = {"train": "temp/master_ave_dist_list.pkl", "test": "temp/test_master_ave_dist_list.pkl"}
+    dict_ave = {"train": "temp/master_ave_dist_list_10.pkl", "test": "temp/test_master_ave_dist_list_10.pkl"}
 
-    dict_dist = {"train": "temp/master_scan_dist_list.pkl", "test": "temp/test_master_scan_dist_list.pkl"}
+    dict_dist = {"train": "temp/master_scan_dist_list_10.pkl", "test": "temp/test_master_scan_dist_list_10.pkl"}
 
-    dict_save = {"train": ["data/x_train.trc", "data/x2_train.trc", "data/y_train.trc"],
-                 "test": ["data/x_test.trc", "data/x2_test.trc", "data/y_test.trc"]}
+    dict_save = {"train": ["data/x_train_10.trc", "data/x2_train_10.trc", "data/y_train_10.trc"],
+                 "test": ["data/x_test_10.trc", "data/x2_test_10.trc", "data/y_test_10.trc"]}
 
     l_scan_case_dist = torch.load(dict_conv[mode]) - 0.5
 
@@ -199,9 +199,9 @@ def filter_data(mode):
     y_train = torch.load(dict_save[mode][2]).float()
 
     idx = torch.randperm(x_train.size(0))
-    x_train = x_train[idx][:10000]
-    x2_train = x2_train[idx][:10000]
-    y_train = y_train[idx][:10000]
+    x_train = x_train[idx]
+    x2_train = x2_train[idx]
+    y_train = y_train[idx]
 
     return x_train, x2_train, y_train
 
@@ -230,7 +230,7 @@ def train_generalized_CNN():
         w10=16#
     )
 
-    wandb.init(project='MLP on image', mode='online', config=hyperparameter_defaults)
+    wandb.init(project='MLP on image', mode='offline', config=hyperparameter_defaults)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     batch_size = wandb.config.batch_size
     lr = wandb.config.lr
