@@ -47,8 +47,8 @@ class homemade_cnn(Module):
         self.Lin6 = Linear(w6, 1, bias=True)
 
     def forward(self, input, input2, in_training=False):
-        y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 10)
-        # y = input[:, 0].reshape((-1, 1, 10, 10))
+        # y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 10)
+        y = input[:, 0].reshape((-1, 1, 10, 10))
 
         # y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
         y = self.relu(self.Lin1(torch.flatten(y, start_dim=1)))
