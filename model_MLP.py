@@ -35,28 +35,28 @@ class homemade_cnn(Module):
         self.mask_max_pool = MaxPool2d(3, stride=1)
         self.mask_max_pool5 = MaxPool2d(5, stride=1)
         self.drop = Dropout(self.dropout_rate)
-        # w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
+        w1, w2, w3, w4 = wandb.config.w1, wandb.config.w2, wandb.config.w3, wandb.config.w4,
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
-        self.Lin1 = Linear(w6, w7, bias=False)
-        self.lr1 = ReLU()
-        self.Lin2 = Linear(w7, w8, bias=False)
-        self.lr2 = ReLU()
-        self.Lin3 = Linear(w8, w9, bias=False)
-        self.lr3 = ReLU()
-        self.Lin4 = Linear(w9, w10, bias=False)
-        self.Lin5 = Linear(w10, 1, bias=False)
+        self.Lin1 = Linear(w1, w2, bias=True)
+        self.relu = ReLU()
+        self.Lin2 = Linear(w2, w3, bias=True)
+        self.Lin3 = Linear(w3, w4, bias=True)
+        self.Lin4 = Linear(w4, w5, bias=True)
+        self.Lin5 = Linear(w5, w6, bias=True)
+        self.Lin6 = Linear(w6, 1, bias=True)
 
     def forward(self, input, input2, in_training=False):
 
         y = input[:, 0].reshape((-1, 1, 10, 10))
 
         # y = torch.cat((torch.flatten(y, start_dim=1), input2[:, None]), 1)
-        y = self.drop(self.lr1(self.Lin1(torch.flatten(y, start_dim=1))))
-        y = self.drop(self.lr2(self.Lin2(y)))
-        y = self.drop(self.lr3(self.Lin3(y)))
-        y = self.drop(self.Lin4(y))
-        y = torch.flatten(self.Lin5(y).reshape(-1) + input2.reshape(-1))
+        y = self.relu(self.Lin1(torch.flatten(y, start_dim=1)))
+        y = self.relu(self.Lin2(y))
+        y = self.relu(self.Lin3(y))
+        y = self.relu(self.Lin4(y))
+        y = self.relu(self.Lin5(y))
+        y = torch.flatten(self.Lin6(y).reshape(-1) + input2.reshape(-1))
         return y
 
 
@@ -131,68 +131,68 @@ def filter_data(mode):
     dict_save = {"train": ["data/x_train.trc", "data/x2_train.trc", "data/y_train.trc"],
                  "test": ["data/x_test.trc", "data/x2_test.trc", "data/y_test.trc"]}
 
-    l_scan_case_dist = torch.load(dict_conv[mode])
-
-    with open(dict_ave[mode], 'rb') as f:
-        ave_dist = pickle.load(f)
-    for i in range(ave_dist.__len__()):
-        if i == 0:
-            temp = ave_dist[i].reshape(-1)
-        else:
-            temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
-    ave_dist = temp
-    ave_dist = torch.from_numpy(np.array(ave_dist))
-
-    with open(dict_dist[mode], 'rb') as f:
-        center_dist = pickle.load(f)
-    for i in range(center_dist.__len__()):
-        if i == 0:
-            temp = center_dist[i].reshape(-1)
-        else:
-            temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
-    center_dist = temp
-    center_dist = torch.from_numpy(np.array(center_dist))
-
-    ind = torch.where(center_dist != 0)[0]
-    x_train = l_scan_case_dist[ind]
-    x2_train = center_dist[ind]
-    y_train = ave_dist[ind]
-
-    x_train = x_train.reshape((-1, 2, 10, 10))
-    sum = x_train.sum(axis=(2, 3))[:, 0]
-    train_filt_max = np.percentile(sum, 99)
-    train_filt_min = np.percentile(sum, 1)
-    filt1 = (sum <= train_filt_max)
-    filt2 = (sum >= train_filt_min)
-    filt = (filt1) & (filt2)
-    x_train = x_train[torch.nonzero(filt)][:, 0]
-    x2_train = x2_train[torch.nonzero(filt)][:, 0]
-    y_train = y_train[torch.nonzero(filt)][:, 0]
-
-    diff = x2_train - y_train
-    train_filt_max = np.percentile(diff, 99)
-    train_filt_min = np.percentile(diff, 1)
-    filt1 = (diff <= train_filt_max)
-    filt2 = (diff >= train_filt_min)
-    filt = (filt1) & (filt2)
-    x_train = x_train[torch.nonzero(filt)[:, 0]]
-    x2_train = x2_train[torch.nonzero(filt)[:, 0]]
-    y_train = y_train[torch.nonzero(filt)[:, 0]]
-
-    filt = torch.where(x_train[:, 0, :, :].sum(axis=(1,2)) != 0)[0]
-    x_train = x_train[filt]
-    x2_train = x2_train[filt]
-    y_train = y_train[filt]
-
-
-    m = 0.5
-    s = 0.175
-    x_train[:, 0] = (x_train[:, 0] - m) / s
+    # l_scan_case_dist = torch.load(dict_conv[mode])
+    #
+    # with open(dict_ave[mode], 'rb') as f:
+    #     ave_dist = pickle.load(f)
+    # for i in range(ave_dist.__len__()):
+    #     if i == 0:
+    #         temp = ave_dist[i].reshape(-1)
+    #     else:
+    #         temp = np.concatenate((temp, ave_dist[i].reshape(-1)), axis=0)
+    # ave_dist = temp
+    # ave_dist = torch.from_numpy(np.array(ave_dist))
+    #
+    # with open(dict_dist[mode], 'rb') as f:
+    #     center_dist = pickle.load(f)
+    # for i in range(center_dist.__len__()):
+    #     if i == 0:
+    #         temp = center_dist[i].reshape(-1)
+    #     else:
+    #         temp = np.concatenate((temp, center_dist[i].reshape(-1)), axis=0)
+    # center_dist = temp
+    # center_dist = torch.from_numpy(np.array(center_dist))
+    #
+    # ind = torch.where(center_dist != 0)[0]
+    # x_train = l_scan_case_dist[ind]
+    # x2_train = center_dist[ind]
+    # y_train = ave_dist[ind]
+    #
+    # x_train = x_train.reshape((-1, 2, 10, 10))
+    # sum = x_train.sum(axis=(2, 3))[:, 0]
+    # train_filt_max = np.percentile(sum, 99)
+    # train_filt_min = np.percentile(sum, 1)
+    # filt1 = (sum <= train_filt_max)
+    # filt2 = (sum >= train_filt_min)
+    # filt = (filt1) & (filt2)
+    # x_train = x_train[torch.nonzero(filt)][:, 0]
+    # x2_train = x2_train[torch.nonzero(filt)][:, 0]
+    # y_train = y_train[torch.nonzero(filt)][:, 0]
+    #
+    # diff = x2_train - y_train
+    # train_filt_max = np.percentile(diff, 99)
+    # train_filt_min = np.percentile(diff, 1)
+    # filt1 = (diff <= train_filt_max)
+    # filt2 = (diff >= train_filt_min)
+    # filt = (filt1) & (filt2)
+    # x_train = x_train[torch.nonzero(filt)[:, 0]]
+    # x2_train = x2_train[torch.nonzero(filt)[:, 0]]
+    # y_train = y_train[torch.nonzero(filt)[:, 0]]
+    #
+    # filt = torch.where(x_train[:, 0, :, :].sum(axis=(1,2)) != 0)[0]
+    # x_train = x_train[filt]
+    # x2_train = x2_train[filt]
+    # y_train = y_train[filt]
+    #
+    #
+    # m = 0.5
+    # s = 0.175
+    # x_train[:, 0] = (x_train[:, 0] - m) / s
     # y_train = (y_train - m) / s
-
-    torch.save(x_train, dict_save[mode][0])
-    torch.save(x2_train, dict_save[mode][1])
-    torch.save(y_train, dict_save[mode][2])
+    #
+    # torch.save(x_train, dict_save[mode][0])
+    # torch.save(x2_train, dict_save[mode][1])
+    # torch.save(y_train, dict_save[mode][2])
 
     x_train = torch.load(dict_save[mode][0]).float()
     x2_train = torch.load(dict_save[mode][1]).float()
@@ -215,19 +215,19 @@ def train_generalized_CNN():
     x_test, x2_test, y_test = filter_data("test")
 
     hyperparameter_defaults = dict(
-        batch_size=10000,
+        batch_size=1,
         lr=2e-5,
         epochs=2,
-        w1=8,
-        w2=16,
-        w3=32,#
-        w4=32,#
-        w5=16,#
-        w6=10*10,
-        w7=512,
-        w8=512,
-        w9=64,
-        w10=16
+        w1=10*10,
+        w2=128,
+        w3=256,
+        w4=256,
+        w5=32,
+        w6=16,
+        w7=512,#
+        w8=512,#
+        w9=64,#
+        w10=16#
     )
 
     wandb.init(project='MLP on image', mode='online', config=hyperparameter_defaults)
