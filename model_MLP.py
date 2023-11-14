@@ -199,9 +199,9 @@ def filter_data(mode):
     y_train = torch.load(dict_save[mode][2]).float()
 
     idx = torch.randperm(x_train.size(0))
-    x_train = x_train[idx]
-    x2_train = x2_train[idx]
-    y_train = y_train[idx]
+    x_train = x_train[idx][:10000]
+    x2_train = x2_train[idx][:10000]
+    y_train = y_train[idx][:10000]
 
     return x_train, x2_train, y_train
 
