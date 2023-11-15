@@ -109,7 +109,7 @@ def create_conv_data(master_scan_dist_list, master_ref_mesh_list):
             p_fid = 'cad_indices/' + master_ref_mesh_list[i].split('/')[1].split('.')[0] + '.pkl'
             with open(p_fid, 'rb') as f:
                 p = pickle.load(f)
-            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 10, False).half()
+            conv = create_conv_image_from_indices(p, master_scan_dist_list[i], 20, False).half()
             torch.save(conv, f"cad_conv/{hsh}.pkl")
         master_conv.append(conv)
     shutil.rmtree(str(path))
@@ -204,34 +204,34 @@ def single_conv_image(scan_dist, ref_mesh):
 
 
 if __name__ == '__main__':
-    # fid_light = 'cad_model/mod_nist_light.stl'
-    # fid_heavy = 'cad_model/mod_nist.stl'
+    fid_light = 'cad_model/mod_nist_light.stl'
+    fid_heavy = 'cad_model/mod_nist.stl'
+    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
+    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
+    # fid_light = 'cad_model/mod_nist_in_process_light.stl'
+    # fid_heavy = 'cad_model/mod_nist_in_process.stl'
     # p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
-    fid_light = 'cad_model/mod_nist_in_process_light.stl'
-    fid_heavy = 'cad_model/mod_nist_in_process.stl'
-    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
-    fid_light = 'cad_model/big_test_part_1_light.stl'
-    fid_heavy = 'cad_model/big_test_part_1.stl'
-    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
-    fid_light = 'cad_model/test_part_2_light.stl'
-    fid_heavy = 'cad_model/test_part_2.stl'
-    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
-    fid_light = 'cad_model/test_part_3_light.stl'
-    fid_heavy = 'cad_model/test_part_3.stl'
-    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
-    fid_light = 'cad_model/test_part_5_light.stl'
-    fid_heavy = 'cad_model/test_part_5.stl'
-    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
-    fid_light = 'cad_model/test_part_6_light.stl'
-    fid_heavy = 'cad_model/test_part_6.stl'
-    p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
-    p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 10, 0.2, p_fid)
+    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
+    # fid_light = 'cad_model/big_test_part_1_light.stl'
+    # fid_heavy = 'cad_model/big_test_part_1.stl'
+    # p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
+    # fid_light = 'cad_model/test_part_2_light.stl'
+    # fid_heavy = 'cad_model/test_part_2.stl'
+    # p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
+    # fid_light = 'cad_model/test_part_3_light.stl'
+    # fid_heavy = 'cad_model/test_part_3.stl'
+    # p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
+    # fid_light = 'cad_model/test_part_5_light.stl'
+    # fid_heavy = 'cad_model/test_part_5.stl'
+    # p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
+    # fid_light = 'cad_model/test_part_6_light.stl'
+    # fid_heavy = 'cad_model/test_part_6.stl'
+    # p_fid = 'cad_indices/' + fid_heavy.split('/')[1].split('.')[0] + '.pkl'
+    # p = create_conv_image_indices(trimesh.load(fid_heavy), trimesh.load(fid_light), 20, 0.2, p_fid)
 
     print('indices done')
     # raise Exception('done')
@@ -240,22 +240,22 @@ if __name__ == '__main__':
     print("started train dataprep\n")
     master_scan_dist_heavy_list, master_ave_dist_list, master_ref_mesh_list, master_scan_dist_list = create_scan_dist(mode='train')
 
-    with open('temp/master_scan_dist_heavy_list.pkl', 'wb') as f:
+    with open('temp/master_scan_dist_heavy_list_20.pkl', 'wb') as f:
         pickle.dump(master_scan_dist_heavy_list, f)
-    with open('temp/master_ave_dist_list.pkl', 'wb') as f:
+    with open('temp/master_ave_dist_list_20.pkl', 'wb') as f:
         pickle.dump(master_ave_dist_list, f)
-    with open('temp/master_ref_mesh_list.pkl', 'wb') as f:
+    with open('temp/master_ref_mesh_list_20.pkl', 'wb') as f:
         pickle.dump(master_ref_mesh_list, f)
-    with open('temp/master_scan_dist_list.pkl', 'wb') as f:
+    with open('temp/master_scan_dist_list_20.pkl', 'wb') as f:
         pickle.dump(master_scan_dist_list, f)
 
-    with open('temp/master_scan_dist_heavy_list.pkl', 'rb') as f:
+    with open('temp/master_scan_dist_heavy_list_20.pkl', 'rb') as f:
         master_scan_dist_heavy_list = pickle.load(f)
-    with open('temp/master_ave_dist_list.pkl', 'rb') as f:
+    with open('temp/master_ave_dist_list_20.pkl', 'rb') as f:
         master_ave_dist_list = pickle.load(f)
-    with open('temp/master_ref_mesh_list.pkl', 'rb') as f:
+    with open('temp/master_ref_mesh_list_20.pkl', 'rb') as f:
         master_ref_mesh_list = pickle.load(f)
-    with open('temp/master_scan_dist_list.pkl', 'rb') as f:
+    with open('temp/master_scan_dist_list_20.pkl', 'rb') as f:
         master_scan_dist_list = pickle.load(f)
 
     master_conv = create_conv_data(master_scan_dist_heavy_list, master_ref_mesh_list)
