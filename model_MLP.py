@@ -209,7 +209,7 @@ def filter_data(mode):
 def train_generalized_CNN():
 
     # === train data import ===
-    x_train, x2_train, y_train = filter_data("train")
+    # x_train, x2_train, y_train = filter_data("train")
 
     # === Test data import ===
     x_test, x2_test, y_test = filter_data("test")
