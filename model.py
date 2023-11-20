@@ -45,7 +45,7 @@ class homemade_cnn(Module):
             LeakyReLU(),
             Conv2d(w2, w3, kernel_size=3, stride=1, padding=0),
             LeakyReLU(),
-            Conv2d(w3, w4, kernel_size=3, stride=1, padding=0),
+            Conv2d(w3, w4, kernel_size=4, stride=1, padding=0),
             LeakyReLU(),
             Flatten(),
             Linear(w4, w5),
@@ -190,9 +190,9 @@ def filter_data(mode, shape):
     # torch.save(x2_train, dict_save[mode][1])
     # torch.save(y_train, dict_save[mode][2])
 
-    x_train = torch.load(dict_save[mode][0]).float()
-    x2_train = torch.load(dict_save[mode][1]).float()
-    y_train = torch.load(dict_save[mode][2]).float()
+    x_train = torch.load(dict_save[mode][0]).float()[:10]
+    x2_train = torch.load(dict_save[mode][1]).float()[:10]
+    y_train = torch.load(dict_save[mode][2]).float()[:10]
 
     torch.manual_seed(42)
     idx = torch.randperm(x_train.size(0))
