@@ -218,7 +218,7 @@ def train_generalized_CNN():
     y_train, y_test = y_train[train_group.indices], y_train[validation_group.indices]
 
     hyperparameter_defaults = dict(
-        batch_size=1000,
+        batch_size=10000,
         lr=1e-4,
         epochs=2,
         w1=64,
