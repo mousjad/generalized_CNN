@@ -66,7 +66,7 @@ class homemade_cnn(Module):
             optimizer.zero_grad()
             x_data, x2_data, y_data = data
             x_data, x2_data, y_data = x_data.to(self.device), x2_data.to(self.device), y_data.to(self.device)
-            pred = self.forward(data_transforms(x_data), x2_data)
+            pred = self.forward(x_data, x2_data)
             loss = loss_fn(pred, y_data)
             Loss += loss.item() * x_data.shape[0]
             # Loss += (loss.item() - loss_fn(x2_data, y_data).item()) * x_data.shape[0]
@@ -242,7 +242,7 @@ def train_generalized_CNN():
         wandb.run.name = 'offline_test'
 
     git_push(r"C:\Generalized_CNN\.git", f"{wandb.run.name}_automated_commit")
-    l_fn = L1Loss(reduction='mean')
+    l_fn = MSELoss(reduction='mean')
 
     train_dataset = dataset(x_train, x2_train, y_train)
     test_dataset = dataset(x_test, x2_test, y_test)
