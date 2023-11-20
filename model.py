@@ -38,105 +38,24 @@ class homemade_cnn(Module):
         w5, w6, w7, w8, w9 = wandb.config.w5, wandb.config.w6, wandb.config.w7, wandb.config.w8, wandb.config.w9
         w10 = wandb.config.w10
 
-        self.c1 = Conv2d(1, w1, (3, 3))
-        self.p1 = MaxPool2d(2)
-        self.r1 = ReLU()
-        self.norm1 = BatchNorm2d(w1)
-        self.drop1 = Dropout(self.dropout_rate)
-
-        self.c2 = Conv2d(w1, w2, (3, 3))
-        self.p2 = MaxPool2d(2)
-        self.r2 = ReLU()
-        self.norm2 = BatchNorm2d(w2)
-        self.drop2 = Dropout(self.dropout_rate)
-
-        # self.c3 = Conv2d(w2, w3, (3, 3))
-        # self.p3 = MaxPool2d(3, stride=1, padding=1)
-        # self.r3 = LeakyReLU()
-        # self.norm3 = BatchNorm2d(w3)
-        # self.drop3 = Dropout(self.dropout_rate)
-        # self.c4 = Conv2d(w3, w4, (3, 3))
-        # self.p4 = MaxPool2d(3, stride=1, padding=1)
-        # self.r4 = LeakyReLU()
-        # self.norm4 = BatchNorm2d(w4)
-        # self.drop4 = Dropout(self.dropout_rate)
-        # self.c5 = Conv2d(w4, w5, (3, 3))
-        # self.p5 = MaxPool2d(3, stride=1, padding=1)
-        # self.r5 = ReLU()
-        # self.norm5 = BatchNorm2d(w5)
-        # self.drop5 = Dropout(self.dropout_rate)
-        # #
-        # self.c6 = Conv2d(w5, w6, (3, 3))
-        # self.p6 = MaxPool2d(3, stride=1, padding=1)
-        # self.r6 = ReLU()
-        # self.norm6 = BatchNorm2d(w6)
-        # self.drop6 = Dropout(self.dropout_rate)
-        # self.c7 = Conv2d(64, 32, (3, 3))
-        # self.p7 = MaxPool2d(3, stride=1, padding=1)
-        # self.r7 = ReLU()
-        # self.norm7 = BatchNorm2d(32)
-        # self.drop7 = Dropout(self.dropout_rate)
-        # self.c8 = Conv2d(16, 8, (3, 3))
-        # self.p8 = MaxPool2d(3, stride=1, padding=1)
-        # self.r8 = ReLU()
-        # self.norm8 = BatchNorm2d(8)
-        # self.drop8 = Dropout(self.dropout_rate)
-        self.Lin1 = Linear(w2, w2)
-        self.lr1 = ReLU()
-        # self.Lin2 = Linear(w7, w8, bias=False)
-        # self.lr2 = ReLU()
-        # self.Lin3 = Linear(w8, w9, bias=False)
-        # self.lr3 = ReLU()
-        # self.Lin4 = Linear(w9, w10, bias=False)
-        self.Lin5 = Linear(w2, 1)
+        self.conv = Sequential(
+            Conv2d(1, w1, kernel_size=3, stride=1, padding=0),
+            LeakyReLU(),
+            Conv2d(w1, w2, kernel_size=3, stride=1, padding=0),
+            LeakyReLU(),
+            Conv2d(w3, w4, kernel_size=3, stride=1, padding=0),
+            LeakyReLU(),
+            Conv2d(w3, w5, kernel_size=3, stride=1, padding=0),
+            LeakyReLU(),
+            Flatten(),
+            Linear(w5, w6),
+            LeakyReLU(),
+            Linear(w6, w7),
+            Flatten(start_dim=0),
+        )
 
     def forward(self, input, input2, in_training=False):
-        # y = neighboorPadding(input[:, 0].reshape((-1, 1, 10, 10)), input[:, 1].reshape((-1, 1, 10, 10)), 3)
-
-        # y = data_transforms["train" if self.training else "val"](y)
-        # y = self.drop1(self.norm1(self.r1(self.c1(y))))
-        # mask = self.mask_max_pool(input[:, 1].reshape((-1, 1, 10, 10)))
-        # y = y * mask
-        #
-        # y = self.drop2(self.norm2(self.r2(self.c2(y))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop3(self.norm3(self.r3(self.c3(y))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop4(self.norm4(self.r4(self.c4(y))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop5(self.norm5(self.r5(self.p5(self.c5(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        #
-        # y = self.drop6(self.norm6(self.r6(self.p6(self.c6(y)))))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        # y = self.drop7(self.r7(self.c7(y)))
-        # mask = self.mask_max_pool(mask)
-        # y = y * mask
-        # y = torch.flatten(self.drop8(self.r8(self.c8(y))), start_dim=1)
-        # y = self.Lin1(y)
-        # y = torch.cat((y, input2[:, None]), 1).reshape(-1, 9)
-        # y = self.lr1(self.Lin1(torch.flatten(y, start_dim=1)))
-        # y = self.lr2(self.Lin2(y))
-        # y = self.lr3(self.Lin3(y))
-        # y = self.Lin4(y)
-        # y2 = torch.flatten(self.input2_drop(self.lin_input2(input2.reshape((-1, 1)))))
-        # y = torch.flatten(self.Lin5(y))
-        # y = (y + y2) / (1 + torch.where(y2 != 0, 1, 0))
-
-        y = input[:, 0].reshape((-1, 1, 10, 10))
-        y = self.p1(self.r1(self.c1(y)))
-        y = self.p2(self.r2(self.c2(y))).reshape(-1, 128)
-        y = self.lr1(self.Lin1(y))
-        y = self.Lin5(y).reshape(-1)
-        return y
+        return self.conv(input)
 
 
 
@@ -198,16 +117,17 @@ class dataset(torch.utils.data.IterableDataset):
     def __len__(self):
         return len(self.X)
 
-def filter_data(mode):
+def filter_data(mode, shape):
 
-    dict_conv = {"train": "data/master_conv_with_mean.trc", "test": "data/test_master_conv_with_mean.trc"}
+    dict_conv = {"train": "data/master_conv_with_mean.trc", "test": "data/test_master_conv_with_mean.trc", "syn": "data/SYN_master_conv_with_mean_10.trc"}
 
-    dict_ave = {"train": "temp/master_ave_dist_list.pkl", "test": "temp/test_master_ave_dist_list.pkl"}
+    dict_ave = {"train": "temp/master_ave_dist_list.pkl", "test": "temp/test_master_ave_dist_list.pkl", "syn": "temp/SYN_master_ave_dist_list_10.pkl"}
 
-    dict_dist = {"train": "temp/master_scan_dist_list.pkl", "test": "temp/test_master_scan_dist_list.pkl"}
+    dict_dist = {"train": "temp/master_scan_dist_list.pkl", "test": "temp/test_master_scan_dist_list.pkl", "syn": "temp/SYN_master_scan_dist_heavy_list_10.pkl"}
 
     dict_save = {"train": ["data/x_train.trc", "data/x2_train.trc", "data/y_train.trc"],
-                 "test": ["data/x_test.trc", "data/x2_test.trc", "data/y_test.trc"]}
+                 "test": ["data/x_test.trc", "data/x2_test.trc", "data/y_test.trc"],
+                 "syn": ["data/x_syn.trc", "data/x2_syn.trc", "data/y_syn.trc"]}
 
     # l_scan_case_dist = torch.load(dict_conv[mode])
     #
@@ -236,7 +156,7 @@ def filter_data(mode):
     # x2_train = center_dist[ind]
     # y_train = ave_dist[ind]
     #
-    # x_train = x_train.reshape((-1, 2, 10, 10))
+    # x_train = x_train.reshape((-1, 2, shape, shape))
     # sum = x_train.sum(axis=(2, 3))[:, 0]
     # train_filt_max = np.percentile(sum, 99)
     # train_filt_min = np.percentile(sum, 1)
@@ -262,13 +182,9 @@ def filter_data(mode):
     # x2_train = x2_train[filt]
     # y_train = y_train[filt]
     #
-    # idx = torch.randperm(x_train.size(0))
-    # x_train = x_train[idx]
-    # x2_train = x2_train[idx]
-    # y_train = y_train[idx]
-    #
-    y_train = 2 * (y_train - x_train[:, 0].float().mean()) / (x_train[:, 0].max() - x_train[:, 0].min())
-    x_train[:, 0] = 2 * (x_train[:, 0] - x_train[:, 0].float().mean()) / (x_train[:, 0].max() - x_train[:, 0].min())
+    # batch = 1000
+    # for i in tqdm(range(int(np.ceil(x_train.shape[0]) / batch))):
+    #     x_train[i * batch:(i + 1) * batch, 0][x_train[i * batch:(i + 1) * batch, 0] != 0] += 0.5
     #
     # torch.save(x_train, dict_save[mode][0])
     # torch.save(x2_train, dict_save[mode][1])
@@ -278,19 +194,31 @@ def filter_data(mode):
     x2_train = torch.load(dict_save[mode][1]).float()
     y_train = torch.load(dict_save[mode][2]).float()
 
+    torch.manual_seed(42)
+    idx = torch.randperm(x_train.size(0))
+    x_train = x_train[idx]
+    x2_train = x2_train[idx]
+    y_train = y_train[idx]
+
     return x_train, x2_train, y_train
 
 
 def train_generalized_CNN():
 
     # === train data import ===
-    x_train, x2_train, y_train = filter_data("train")
+    x_train, x2_train, y_train = filter_data("syn", 10)
 
-    # === Test data import ===
-    x_test, x2_test, y_test = filter_data("test")
+    train_group, validation_group = torch.utils.data.random_split(range(x_train.shape[0]),
+                                                                  [int(np.round(0.8 * x_train.shape[0])),
+                                                                   int(np.round(0.2 * x_train.shape[0]))],
+                                                                  generator=torch.Generator().manual_seed(42))
+
+    x_train, x_test = x_train[train_group.indices], x_train[validation_group.indices]
+    x2_train, x2_test = x2_train[train_group.indices], x2_train[validation_group.indices]
+    y_train, y_test = y_train[train_group.indices], y_train[validation_group.indices]
 
     hyperparameter_defaults = dict(
-        batch_size=10000,
+        batch_size=1000,
         lr=1e-4,
         epochs=2,
         w1=64,
