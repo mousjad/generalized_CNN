@@ -221,11 +221,11 @@ def train_generalized_CNN():
         batch_size=1000,
         lr=1e-4,
         epochs=2,
-        w1=16,
-        w2=64,
-        w3=128,
-        w4=32,
-        w5=8,
+        w1=64,
+        w2=128,
+        w3=256,
+        w4=64,
+        w5=32,
         w6=1,#
         w7=32,#
         w8=16,#
