@@ -45,17 +45,17 @@ class homemade_cnn(Module):
             LeakyReLU(),
             Conv2d(w3, w4, kernel_size=3, stride=1, padding=0),
             LeakyReLU(),
-            Conv2d(w3, w5, kernel_size=3, stride=1, padding=0),
+            Conv2d(w4, w5, kernel_size=3, stride=1, padding=0),
             LeakyReLU(),
             Flatten(),
             Linear(w5, w6),
             LeakyReLU(),
-            Linear(w6, w7),
+            Linear(w6, 1),
             Flatten(start_dim=0),
         )
 
     def forward(self, input, input2, in_training=False):
-        return self.conv(input)
+        return self.conv(input[:, 0, :, :])
 
 
 
@@ -221,12 +221,12 @@ def train_generalized_CNN():
         batch_size=1000,
         lr=1e-4,
         epochs=2,
-        w1=64,
-        w2=128,
-        w3=32,#
-        w4=32,#
-        w5=16,#
-        w6=32,#
+        w1=8,
+        w2=16,
+        w3=32,
+        w4=32,
+        w5=16,
+        w6=8,
         w7=32,#
         w8=16,#
         w9=8,#
