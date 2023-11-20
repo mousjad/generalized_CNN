@@ -43,14 +43,14 @@ class homemade_cnn(Module):
             LeakyReLU(),
             Conv2d(w1, w2, kernel_size=3, stride=1, padding=0),
             LeakyReLU(),
+            Conv2d(w2, w3, kernel_size=3, stride=1, padding=0),
+            LeakyReLU(),
             Conv2d(w3, w4, kernel_size=3, stride=1, padding=0),
             LeakyReLU(),
-            Conv2d(w4, w5, kernel_size=3, stride=1, padding=0),
-            LeakyReLU(),
             Flatten(),
-            Linear(w5, w6),
+            Linear(w4, w5),
             LeakyReLU(),
-            Linear(w6, 1),
+            Linear(w5, 1),
             Flatten(start_dim=0),
         )
 
@@ -224,9 +224,9 @@ def train_generalized_CNN():
         w1=8,
         w2=16,
         w3=32,
-        w4=32,
-        w5=16,
-        w6=8,
+        w4=16,
+        w5=8,
+        w6=1,#
         w7=32,#
         w8=16,#
         w9=8,#
