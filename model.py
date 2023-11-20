@@ -55,7 +55,7 @@ class homemade_cnn(Module):
         )
 
     def forward(self, input, input2, in_training=False):
-        return self.conv(input[:, 0, :, :])
+        return self.conv(input[:, 0, :, :].reshape((-1, 1, 10, 10)))
 
 
 
