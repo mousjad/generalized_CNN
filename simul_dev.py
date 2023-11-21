@@ -12,7 +12,7 @@ def apply_systematic_deviations(mesh, gradient_x, gradient_y):
 
 def apply_noise(mesh, scale_factor):
     deviated_mesh = mesh.copy()
-    random_value = np.random.uniform(-1, 1, mesh.vertices.shape[0]) * scale_factor
+    random_value = np.random.normal(scale=0.003, size=mesh.vertices.shape[0]) * scale_factor # TODO use gaussian noise instead
     deviated_mesh.vertices += mesh.vertex_normals * random_value.reshape((-1, 1))
     return deviated_mesh
 
